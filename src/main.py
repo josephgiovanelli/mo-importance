@@ -1,96 +1,202 @@
-"""
-Quadratic Function
-^^^^^^^^^^^^^^^^^^
-An example of applying SMAC to optimize a quadratic function.
-We use the black-box facade because it is designed for black-box function optimization.
-The black-box facade uses a :term:`Gaussian Process<GP>` as its surrogate model.
-The facade works best on a numerical hyperparameter configuration space and should not
-be applied to problems with large evaluation budgets (up to 1000 evaluations).
-"""
+from __future__ import annotations
 
+import time
+import warnings
+
+import matplotlib.pyplot as plt
 import numpy as np
-from ConfigSpace import Configuration, ConfigurationSpace, Float
-from matplotlib import pyplot as plt
+from ConfigSpace import (
+    Categorical,
+    Configuration,
+    ConfigurationSpace,
+    EqualsCondition,
+    Float,
+    InCondition,
+    Integer,
+)
+from sklearn.datasets import load_digits
+from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.neural_network import MLPClassifier
 
 from smac import HyperparameterOptimizationFacade as HPOFacade
-from smac import RunHistory, Scenario
+from smac import Scenario
+from smac.facade.abstract_facade import AbstractFacade
+from smac.multi_objective.parego import ParEGO
+from smac.model.random_model import RandomModel
+
+from my_model.my_random_model import MyRandomModel
 
 __copyright__ = "Copyright 2021, AutoML.org Freiburg-Hannover"
 __license__ = "3-clause BSD"
 
 
-class QuadraticFunction:
+digits = load_digits()
+np.random.seed(0)
+
+
+class MLP:
     @property
     def configspace(self) -> ConfigurationSpace:
-        cs = ConfigurationSpace(seed=0)
-        x = Float("x", (-5, 5), default=-5)
-        cs.add_hyperparameters([x])
+        cs = ConfigurationSpace()
+
+        n_layer = Integer("n_layer", (1, 5), default=1)
+        n_neurons = Integer("n_neurons", (8, 256), log=True, default=10)
+        activation = Categorical(
+            "activation", ["logistic", "tanh", "relu"], default="tanh"
+        )
+        solver = Categorical("solver", ["lbfgs", "sgd", "adam"], default="adam")
+        batch_size = Integer("batch_size", (30, 300), default=200)
+        learning_rate = Categorical(
+            "learning_rate", ["constant", "invscaling", "adaptive"], default="constant"
+        )
+        learning_rate_init = Float(
+            "learning_rate_init", (0.0001, 1.0), default=0.001, log=True
+        )
+
+        cs.add_hyperparameters(
+            [
+                n_layer,
+                n_neurons,
+                activation,
+                solver,
+                batch_size,
+                learning_rate,
+                learning_rate_init,
+            ]
+        )
+
+        use_lr = EqualsCondition(child=learning_rate, parent=solver, value="sgd")
+        use_lr_init = InCondition(
+            child=learning_rate_init, parent=solver, values=["sgd", "adam"]
+        )
+        use_batch_size = InCondition(
+            child=batch_size, parent=solver, values=["sgd", "adam"]
+        )
+
+        # We can also add multiple conditions on hyperparameters at once:
+        cs.add_conditions([use_lr, use_batch_size, use_lr_init])
 
         return cs
 
-    def train(self, config: Configuration, seed: int = 0) -> float:
-        """Returns the y value of a quadratic function with a minimum we know to be at x=0."""
-        x = config["x"]
-        return x**2
+    def train(
+        self, config: Configuration, seed: int = 0, budget: int = 10
+    ) -> dict[str, float]:
+        lr = config["learning_rate"] if config["learning_rate"] else "constant"
+        lr_init = (
+            config["learning_rate_init"] if config["learning_rate_init"] else 0.001
+        )
+        batch_size = config["batch_size"] if config["batch_size"] else 200
+
+        start_time = time.time()
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore")
+
+            classifier = MLPClassifier(
+                hidden_layer_sizes=[config["n_neurons"]] * config["n_layer"],
+                solver=config["solver"],
+                batch_size=batch_size,
+                activation=config["activation"],
+                learning_rate=lr,
+                learning_rate_init=lr_init,
+                max_iter=int(np.ceil(budget)),
+                random_state=seed,
+            )
+
+            # Returns the 5-fold cross validation accuracy
+            cv = StratifiedKFold(
+                n_splits=5, random_state=seed, shuffle=True
+            )  # to make CV splits consistent
+            score = cross_val_score(
+                classifier, digits.data, digits.target, cv=cv, error_score="raise"
+            )
+
+        return {
+            "1 - accuracy": 1 - np.mean(score),
+            "time": time.time() - start_time,
+        }
 
 
-def plot(runhistory: RunHistory, incumbent: Configuration) -> None:
-    plt.figure()
+def plot_pareto(smac: AbstractFacade, incumbents: list[Configuration]) -> None:
+    """Plots configurations from SMAC and highlights the best configurations in a Pareto front."""
+    average_costs = []
+    average_pareto_costs = []
+    for config in smac.runhistory.get_configs():
+        # Since we use multiple seeds, we have to average them to get only one cost value pair for each configuration
+        average_cost = smac.runhistory.average_cost(config)
 
-    # Plot ground truth
-    x = list(np.linspace(-5, 5, 100))
-    y = [xi * xi for xi in x]
-    plt.plot(x, y)
+        if config in incumbents:
+            average_pareto_costs += [average_cost]
+        else:
+            average_costs += [average_cost]
 
-    # Plot all trials
-    for k, v in runhistory.items():
-        config = runhistory.get_config(k.config_id)
-        x = config["x"]
-        y = v.cost  # type: ignore
-        plt.scatter(x, y, c="blue", alpha=0.1, zorder=9999, marker="o")
+    # Let's work with a numpy array
+    costs = np.vstack(average_costs)
+    pareto_costs = np.vstack(average_pareto_costs)
+    pareto_costs = pareto_costs[pareto_costs[:, 0].argsort()]  # Sort them
 
-    # Plot incumbent
-    plt.scatter(incumbent["x"], incumbent["x"] * incumbent["x"], c="red", zorder=10000, marker="x")
+    costs_x, costs_y = costs[:, 0], costs[:, 1]
+    pareto_costs_x, pareto_costs_y = pareto_costs[:, 0], pareto_costs[:, 1]
 
+    plt.scatter(costs_x, costs_y, marker="x", label="Configuration")
+    plt.scatter(pareto_costs_x, pareto_costs_y, marker="x", c="r", label="Incumbent")
+    plt.step(
+        [pareto_costs_x[0]]
+        + pareto_costs_x.tolist()
+        + [np.max(costs_x)],  # We add bounds
+        [np.max(costs_y)]
+        + pareto_costs_y.tolist()
+        + [np.min(pareto_costs_y)],  # We add bounds
+        where="post",
+        linestyle=":",
+    )
+
+    plt.title("Pareto-Front")
+    plt.xlabel(smac.scenario.objectives[0])
+    plt.ylabel(smac.scenario.objectives[1])
+    plt.legend()
     plt.show()
 
 
 if __name__ == "__main__":
-    model = QuadraticFunction()
+    mlp = MLP()
+    objectives = ["1 - accuracy", "time"]
 
-    # Scenario object specifying the optimization "environment"
-    scenario = Scenario(model.configspace, deterministic=True, n_trials=100)
-
-    # Now we use SMAC to find the best hyperparameters
-    smac = HPOFacade(
-        scenario,
-        model.train,  # We pass the target function here
-        overwrite=True,  # Overrides any previous results that are found that are inconsistent with the meta-data
+    # Define our environment variables
+    scenario = Scenario(
+        mlp.configspace,
+        objectives=objectives,
+        walltime_limit=30,  # After 30 seconds, we stop the hyperparameter optimization
+        n_trials=200,  # Evaluate max 200 different trials
+        n_workers=1,
     )
 
-    incumbent = smac.optimize()
+    # We want to run five random configurations before starting the optimization.
+    initial_design = HPOFacade.get_initial_design(scenario, n_configs=5)
+    multi_objective_algorithm = MyRandomModel(mlp.configspace)
+    intensifier = HPOFacade.get_intensifier(scenario, max_config_calls=1)
+
+    # Create our SMAC object and pass the scenario and the train method
+    smac = HPOFacade(
+        scenario,
+        mlp.train,
+        initial_design=initial_design,
+        multi_objective_algorithm=multi_objective_algorithm,
+        # intensifier=intensifier,
+        overwrite=True,
+    )
+
+    # Let's optimize
+    incumbents = smac.optimize()
 
     # Get cost of default configuration
-    default_cost = smac.validate(model.configspace.get_default_configuration())
-    print(f"Default cost: {default_cost}")
+    default_cost = smac.validate(mlp.configspace.get_default_configuration())
+    print(f"Validated costs from default config: \n--- {default_cost}\n")
 
-    # Let's calculate the cost of the incumbent
-    incumbent_cost = smac.validate(incumbent)
-    print(f"Incumbent cost: {incumbent_cost}")
+    print("Validated costs from the Pareto front (incumbents):")
+    for incumbent in incumbents:
+        cost = smac.validate(incumbent)
+        print("---", cost)
 
-    # Let's plot it too
-    plot(smac.runhistory, incumbent)
-Footer
-© 2023 GitHub, Inc.
-Footer navigation
-Terms
-Privacy
-Security
-Status
-Docs
-Contact GitHub
-Pricing
-API
-Training
-Blog
-About
+    # Let's plot a pareto front
+    plot_pareto(smac, incumbents)
