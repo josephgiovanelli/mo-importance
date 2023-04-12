@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
 
 from smac.model.random_model import RandomModel
 from smac.multi_objective import MeanAggregationStrategy
 from smac.utils.logging import get_logger
+
 from smac.scenario import Scenario
 
 
@@ -29,3 +30,14 @@ class MyRandomModel(RandomModel, MeanAggregationStrategy):
 
     def __call__(self, values: list[float]) -> float:  # noqa: D102
         return 0.0
+
+    @property
+    def meta(self) -> dict[str, Any]:
+        """Returns the meta data of the created object."""
+        return {
+            "name": self.__class__.__name__,
+            "types": self._types,
+            "bounds": self._bounds,
+            "pca_components": self._pca_components,
+            "objective_weights": self._objective_weights,
+        }

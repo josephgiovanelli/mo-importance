@@ -1,120 +1,27 @@
 from __future__ import annotations
 
-import time
-import warnings
+from functools import partial
 
 import matplotlib.pyplot as plt
 import numpy as np
-from ConfigSpace import (
-    Categorical,
-    Configuration,
-    ConfigurationSpace,
-    EqualsCondition,
-    Float,
-    InCondition,
-    Integer,
-)
+
 from sklearn.datasets import load_digits
-from sklearn.model_selection import StratifiedKFold, cross_val_score
-from sklearn.neural_network import MLPClassifier
+
+from ConfigSpace import Configuration
 
 from smac import HyperparameterOptimizationFacade as HPOFacade
 from smac import Scenario
 from smac.facade.abstract_facade import AbstractFacade
-from smac.multi_objective.parego import ParEGO
 from smac.model.random_model import RandomModel
 
-from my_model.my_random_model import MyRandomModel
+from algorithm.mlp import MLP
+
+from utils.argparse import parse_args
+from utils.dataset import load_dataset_from_openml
+
 
 __copyright__ = "Copyright 2021, AutoML.org Freiburg-Hannover"
 __license__ = "3-clause BSD"
-
-
-digits = load_digits()
-np.random.seed(0)
-
-
-class MLP:
-    @property
-    def configspace(self) -> ConfigurationSpace:
-        cs = ConfigurationSpace()
-
-        n_layer = Integer("n_layer", (1, 5), default=1)
-        n_neurons = Integer("n_neurons", (8, 256), log=True, default=10)
-        activation = Categorical(
-            "activation", ["logistic", "tanh", "relu"], default="tanh"
-        )
-        solver = Categorical("solver", ["lbfgs", "sgd", "adam"], default="adam")
-        batch_size = Integer("batch_size", (30, 300), default=200)
-        learning_rate = Categorical(
-            "learning_rate", ["constant", "invscaling", "adaptive"], default="constant"
-        )
-        learning_rate_init = Float(
-            "learning_rate_init", (0.0001, 1.0), default=0.001, log=True
-        )
-
-        cs.add_hyperparameters(
-            [
-                n_layer,
-                n_neurons,
-                activation,
-                solver,
-                batch_size,
-                learning_rate,
-                learning_rate_init,
-            ]
-        )
-
-        use_lr = EqualsCondition(child=learning_rate, parent=solver, value="sgd")
-        use_lr_init = InCondition(
-            child=learning_rate_init, parent=solver, values=["sgd", "adam"]
-        )
-        use_batch_size = InCondition(
-            child=batch_size, parent=solver, values=["sgd", "adam"]
-        )
-
-        # We can also add multiple conditions on hyperparameters at once:
-        cs.add_conditions([use_lr, use_batch_size, use_lr_init])
-
-        return cs
-
-    def train(
-        self, config: Configuration, seed: int = 0, budget: int = 10
-    ) -> dict[str, float]:
-        lr = config["learning_rate"] if config["learning_rate"] else "constant"
-        lr_init = (
-            config["learning_rate_init"] if config["learning_rate_init"] else 0.001
-        )
-        batch_size = config["batch_size"] if config["batch_size"] else 200
-
-        start_time = time.time()
-
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore")
-
-            classifier = MLPClassifier(
-                hidden_layer_sizes=[config["n_neurons"]] * config["n_layer"],
-                solver=config["solver"],
-                batch_size=batch_size,
-                activation=config["activation"],
-                learning_rate=lr,
-                learning_rate_init=lr_init,
-                max_iter=int(np.ceil(budget)),
-                random_state=seed,
-            )
-
-            # Returns the 5-fold cross validation accuracy
-            cv = StratifiedKFold(
-                n_splits=5, random_state=seed, shuffle=True
-            )  # to make CV splits consistent
-            score = cross_val_score(
-                classifier, digits.data, digits.target, cv=cv, error_score="raise"
-            )
-
-        return {
-            "1 - accuracy": 1 - np.mean(score),
-            "time": time.time() - start_time,
-        }
 
 
 def plot_pareto(smac: AbstractFacade, incumbents: list[Configuration]) -> None:
@@ -159,21 +66,25 @@ def plot_pareto(smac: AbstractFacade, incumbents: list[Configuration]) -> None:
 
 
 if __name__ == "__main__":
-    mlp = MLP()
-    objectives = ["1 - accuracy", "time"]
+    args = parse_args()
+    np.random.seed(args.seed)
+
+    X, y, _ = load_dataset_from_openml(args.dataset)
+    mlp = MLP(X, y, args.metrics, args.modes)
 
     # Define our environment variables
     scenario = Scenario(
         mlp.configspace,
-        objectives=objectives,
-        walltime_limit=30,  # After 30 seconds, we stop the hyperparameter optimization
-        n_trials=200,  # Evaluate max 200 different trials
+        output_directory=args.output_path,
+        objectives=args.metrics,
+        walltime_limit=args.time_budget,
+        n_trials=args.iterations,
+        seed=args.seed,
         n_workers=1,
     )
 
     # We want to run five random configurations before starting the optimization.
     initial_design = HPOFacade.get_initial_design(scenario, n_configs=5)
-    multi_objective_algorithm = MyRandomModel(mlp.configspace)
     intensifier = HPOFacade.get_intensifier(scenario, max_config_calls=1)
 
     # Create our SMAC object and pass the scenario and the train method
@@ -181,8 +92,9 @@ if __name__ == "__main__":
         scenario,
         mlp.train,
         initial_design=initial_design,
-        multi_objective_algorithm=multi_objective_algorithm,
-        # intensifier=intensifier,
+        model=RandomModel(mlp.configspace),
+        # multi_objective_algorithm=multi_objective_algorithm,
+        intensifier=intensifier,
         overwrite=True,
     )
 
@@ -199,4 +111,4 @@ if __name__ == "__main__":
         print("---", cost)
 
     # Let's plot a pareto front
-    plot_pareto(smac, incumbents)
+    # plot_pareto(smac, incumbents)
