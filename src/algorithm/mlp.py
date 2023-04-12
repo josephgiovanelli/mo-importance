@@ -114,6 +114,6 @@ class MLP:
 
         return {
             f"{metric}": np.mean(scores["test_" + metric])
-            * (-1 if self.modes[idx] == min else 1)
+            * (-1 if self.modes[idx] == "max" else 1)
             for idx, metric in enumerate(self.metrics)
         }
