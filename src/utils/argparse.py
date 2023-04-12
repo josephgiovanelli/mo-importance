@@ -62,5 +62,4 @@ def parse_args():
         help="seed for reproducibility",
     )
 
-    args = parser.parse_args()
-    return args
+    return parser.parse_known_args()
