@@ -1,28 +1,30 @@
 from __future__ import annotations
 
-import time
 import warnings
 
 import numpy as np
+import ConfigSpace
 from ConfigSpace import (
     Categorical,
     Configuration,
     ConfigurationSpace,
-    EqualsCondition,
     Float,
-    InCondition,
     Integer,
+    CategoricalHyperparameter,
 )
 from sklearn.model_selection import StratifiedKFold, cross_validate
 from sklearn.neural_network import MLPClassifier
 
 
 class MLP:
-    def __init__(self, X, y, metrics, modes):
+    def __init__(self, X, y, metrics, modes, application, setting):
         self.X = X
         self.y = y
         self.metrics = metrics
         self.modes = modes
+        self.application = application
+        self.setting = setting
+        self.p_star = None
 
     @property
     def configspace(self) -> ConfigurationSpace:
@@ -33,87 +35,95 @@ class MLP:
         activation = Categorical(
             "activation", ["logistic", "tanh", "relu"], default="tanh"
         )
-        solver = Categorical("solver", ["lbfgs", "sgd", "adam"], default="adam")
-        batch_size = Integer("batch_size", (30, 300), default=200)
-        learning_rate = Categorical(
-            "learning_rate", ["constant", "invscaling", "adaptive"], default="constant"
-        )
+        solver = Categorical("solver", ["sgd", "adam"], default="adam")
         learning_rate_init = Float(
             "learning_rate_init", (0.0001, 1.0), default=0.001, log=True
         )
+        alpha = Float("alpha", (0.000001, 10.0), default=0.0001, log=True)
 
-        cs.add_hyperparameters(
-            [
-                n_layer,
-                n_neurons,
-                activation,
-                solver,
-                batch_size,
-                learning_rate,
-                learning_rate_init,
-            ]
-        )
+        hps = [n_layer, n_neurons, activation, solver, learning_rate_init, alpha]
 
-        use_lr = EqualsCondition(child=learning_rate, parent=solver, value="sgd")
-        use_lr_init = InCondition(
-            child=learning_rate_init, parent=solver, values=["sgd", "adam"]
-        )
-        use_batch_size = InCondition(
-            child=batch_size, parent=solver, values=["sgd", "adam"]
-        )
+        if self.setting != "mo":
+            self.p_star = alpha if self.application == "fairness" else n_layer
+            hps = [hp for hp in hps if hp != self.p_star]
 
-        # We can also add multiple conditions on hyperparameters at once:
-        cs.add_conditions([use_lr, use_batch_size, use_lr_init])
+        cs.add_hyperparameters(hps)
 
         return cs
 
-    def train(
+    def grid_search(self, num_steps):
+        return ConfigSpace.util.generate_grid(
+            self.configspace,
+            {
+                k: num_steps
+                for k, v in self.configspace.get_hyperparameters_dict().items()
+                if type(v) != CategoricalHyperparameter
+            },
+        )
+
+    def random_search(self, num_samples):
+        return self.configspace.sample_configuration(num_samples)
+
+    def __train(
         self,
-        config: Configuration,
+        config: dict,
         seed: int = 0,
         budget: int = 10,
-    ) -> dict[str, float]:
-        lr = config["learning_rate"] if config["learning_rate"] else "constant"
-        lr_init = (
-            config["learning_rate_init"] if config["learning_rate_init"] else 0.001
+    ):
+        classifier = MLPClassifier(
+            hidden_layer_sizes=[config["n_neurons"]] * config["n_layer"],
+            solver=config["solver"],
+            activation=config["activation"],
+            learning_rate_init=config["learning_rate_init"],
+            alpha=config["alpha"],
+            max_iter=int(np.ceil(budget)),
+            random_state=seed,
         )
-        batch_size = config["batch_size"] if config["batch_size"] else 200
 
-        start_time = time.time()
+        # Returns the 5-fold cross validation accuracy
+        cv = StratifiedKFold(
+            n_splits=5, random_state=seed, shuffle=True
+        )  # to make CV splits consistent
 
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore")
-
-            classifier = MLPClassifier(
-                hidden_layer_sizes=[config["n_neurons"]] * config["n_layer"],
-                solver=config["solver"],
-                batch_size=batch_size,
-                activation=config["activation"],
-                learning_rate=lr,
-                learning_rate_init=lr_init,
-                max_iter=int(np.ceil(budget)),
-                random_state=seed,
-            )
-
-            # Returns the 5-fold cross validation accuracy
-            cv = StratifiedKFold(
-                n_splits=5, random_state=seed, shuffle=True
-            )  # to make CV splits consistent
-
-            scores = cross_validate(
-                classifier,
-                self.X.copy(),
-                self.y.copy(),
-                scoring=self.metrics,
-                cv=cv,
-                return_estimator=False,
-                return_train_score=False,
-                verbose=0,
-                error_score="raise",
-            )
+        scores = cross_validate(
+            classifier,
+            self.X.copy(),
+            self.y.copy(),
+            scoring=self.metrics,
+            cv=cv,
+            return_estimator=False,
+            return_train_score=False,
+            verbose=0,
+            error_score="raise",
+        )
 
         return {
             f"{metric}": np.mean(scores["test_" + metric])
             * (-1 if self.modes[idx] == "max" else 1)
             for idx, metric in enumerate(self.metrics)
         }
+
+    def objective(
+        self,
+        config: Configuration,
+        seed: int = 0,
+        budget: int = 10,
+    ) -> dict[str, float]:
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore")
+
+            my_config = config.get_dictionary()
+            if self.setting != "mo":
+                scores = []
+                cs = ConfigurationSpace()
+                cs.add_hyperparameters([self.p_star])
+                for p in ConfigSpace.util.generate_grid(
+                    cs,
+                    {self.p_star.name: 10},
+                ):
+                    my_config[self.p_star.name] = p[self.p_star.name]
+                    scores += [self.__train(my_config, seed, budget)]
+            else:
+                scores = self.__train(config, seed, budget)
+
+        return scores
