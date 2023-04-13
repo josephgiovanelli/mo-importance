@@ -14,7 +14,7 @@ from algorithm.mlp import MLP
 from utils.argparse import parse_args
 from utils.dataset import load_dataset_from_openml
 from utils.plot import plot_pareto
-
+from utils.sample import grid_search, random_search
 
 __copyright__ = "Copyright 2021, AutoML.org Freiburg-Hannover"
 __license__ = "3-clause BSD"
@@ -32,9 +32,10 @@ if __name__ == "__main__":
         modes=args.modes,
         application="fairness",
         setting="pareto",
+        grid_samples=10,
     )
-    # grid_samples = mlp.grid_search(num_steps=2)
-    random_samples = mlp.random_search(num_samples=25)
+    # grid_samples = grid_search(configspace=mlp.configspace, num_steps=2)
+    random_samples = random_search(configspace=mlp.configspace, num_samples=25)
 
     paretos = []
     for sample in random_samples:

@@ -10,14 +10,15 @@ from ConfigSpace import (
     ConfigurationSpace,
     Float,
     Integer,
-    CategoricalHyperparameter,
 )
 from sklearn.model_selection import StratifiedKFold, cross_validate
 from sklearn.neural_network import MLPClassifier
 
+from utils.sample import grid_search
+
 
 class MLP:
-    def __init__(self, X, y, metrics, modes, application, setting):
+    def __init__(self, X, y, metrics, modes, application, setting, grid_samples):
         self.X = X
         self.y = y
         self.metrics = metrics
@@ -25,6 +26,7 @@ class MLP:
         self.application = application
         self.setting = setting
         self.p_star = None
+        self.grid_samples = grid_samples
 
     @property
     def configspace(self) -> ConfigurationSpace:
@@ -51,25 +53,12 @@ class MLP:
 
         return cs
 
-    def grid_search(self, num_steps):
-        return ConfigSpace.util.generate_grid(
-            self.configspace,
-            {
-                k: num_steps
-                for k, v in self.configspace.get_hyperparameters_dict().items()
-                if type(v) != CategoricalHyperparameter
-            },
-        )
-
-    def random_search(self, num_samples):
-        return self.configspace.sample_configuration(num_samples)
-
     def __train(
         self,
         config: dict,
         seed: int = 0,
         budget: int = 10,
-    ):
+    ) -> dict[str, float]:
         classifier = MLPClassifier(
             hidden_layer_sizes=[config["n_neurons"]] * config["n_layer"],
             solver=config["solver"],
@@ -108,7 +97,7 @@ class MLP:
         config: Configuration,
         seed: int = 0,
         budget: int = 10,
-    ) -> dict[str, float]:
+    ):
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
 
@@ -117,10 +106,7 @@ class MLP:
                 scores = []
                 cs = ConfigurationSpace()
                 cs.add_hyperparameters([self.p_star])
-                for p in ConfigSpace.util.generate_grid(
-                    cs,
-                    {self.p_star.name: 10},
-                ):
+                for p in grid_search(cs, self.grid_samples):
                     my_config[self.p_star.name] = p[self.p_star.name]
                     scores += [self.__train(my_config, seed, budget)]
             else:
