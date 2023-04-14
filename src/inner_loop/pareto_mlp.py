@@ -1,0 +1,84 @@
+from __future__ import annotations
+
+import warnings
+
+import numpy as np
+
+from ConfigSpace import (
+    Categorical,
+    Configuration,
+    ConfigurationSpace,
+    Float,
+    Integer,
+)
+
+from ConfigSpace import Configuration
+
+from smac.facade.abstract_facade import AbstractFacade
+
+from smac import HyperparameterOptimizationFacade as HPOFacade
+from smac import Scenario
+from smac.model.random_model import RandomModel
+
+from sklearn.model_selection import StratifiedKFold, cross_validate
+from sklearn.neural_network import MLPClassifier
+from my_model.my_grid_model import MyGridModel
+
+from utils.sample import grid_search
+
+from inner_loop.mlp import MLP
+
+
+class ParetoMLP(MLP):
+    def __init__(self, X, y, metrics, modes, application, grid_samples):
+        self.X = X
+        self.y = y
+        self.metrics = metrics
+        self.modes = modes
+        self.application = application
+        self.p_star = super().configspace.get_hyperparameter(
+            "alpha" if self.application == "fairness" else "n_layer"
+        )
+        self.grid_samples = grid_samples
+
+    @property
+    def configspace(self) -> ConfigurationSpace:
+        return ConfigurationSpace(
+            {
+                k: v
+                for k, v in super().configspace.get_hyperparameters_dict().items()
+                if k != self.p_star.name
+            }
+        )
+
+    @property
+    def grid_configspace(self) -> ConfigurationSpace:
+        return ConfigurationSpace({self.p_star.name: self.p_star})
+
+    def __union_configs(
+        self, random_config: Configuration, grid_config: Configuration
+    ) -> Configuration:
+        temp_config = super().configspace.sample_configuration()
+        for config in [random_config, grid_config]:
+            for k, v in config.get_dictionary().items():
+                temp_config[k] = v
+        return temp_config
+
+    def get_pareto(
+        self,
+        random_config: Configuration,
+        seed: int = 0,
+        budget: int = 10,
+    ):
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore")
+
+            return [
+                (
+                    self.__union_configs(random_config, grid_config),
+                    self.train(
+                        self.__union_configs(random_config, grid_config), seed, budget
+                    ),
+                )
+                for grid_config in grid_search(self.grid_configspace, self.grid_samples)
+            ]

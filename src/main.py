@@ -1,5 +1,6 @@
 # %%
 from __future__ import annotations
+import os
 
 import numpy as np
 
@@ -9,12 +10,13 @@ from smac import HyperparameterOptimizationFacade as HPOFacade
 from smac import Scenario
 from smac.model.random_model import RandomModel
 
-from algorithm.mlp import MLP
+from inner_loop.pareto_mlp import ParetoMLP
 
 from utils.argparse import parse_args
 from utils.dataset import load_dataset_from_openml
-from utils.plot import plot_pareto
+from utils.plot import plot_pareto, get_pareto_from_history
 from utils.sample import grid_search, random_search
+from utils.common import make_dir
 
 __copyright__ = "Copyright 2021, AutoML.org Freiburg-Hannover"
 __license__ = "3-clause BSD"
@@ -25,23 +27,27 @@ if __name__ == "__main__":
     np.random.seed(args.seed)
 
     X, y, _ = load_dataset_from_openml(args.dataset)
-    mlp = MLP(
+    mlp = ParetoMLP(
         X=X,
         y=y,
         metrics=args.metrics,
         modes=args.modes,
         application="fairness",
-        setting="pareto",
         grid_samples=10,
     )
     # grid_samples = grid_search(configspace=mlp.configspace, num_steps=2)
-    random_samples = random_search(configspace=mlp.configspace, num_samples=25)
+    random_samples = random_search(configspace=mlp.configspace, num_samples=50)
 
     paretos = []
     for sample in random_samples:
-        paretos += [mlp.objective(sample, args.seed)]
+        paretos += [mlp.get_pareto(sample, args.seed)]
 
-    print(paretos)
+    for idx, history in enumerate(paretos):
+        plot_pareto(
+            get_pareto_from_history(history, args.metrics),
+            args.metrics,
+            os.path.join(make_dir(args.output_path), str(idx)),
+        )
 
     # # Define our environment variables
     # scenario = Scenario(

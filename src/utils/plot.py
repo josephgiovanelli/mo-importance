@@ -12,22 +12,51 @@ __copyright__ = "Copyright 2021, AutoML.org Freiburg-Hannover"
 __license__ = "3-clause BSD"
 
 
-def plot_pareto(smac: AbstractFacade, incumbents: list[Configuration]) -> None:
+def get_pareto_from_history(history: list[tuple[Configuration, dict]], metrics):
+    def _get_pareto_indeces(costs):
+        is_efficient = np.arange(costs.shape[0])
+        next_point_index = 0  # Next index in the is_efficient array to search for
+        while next_point_index < len(costs):
+            nondominated_point_mask = np.any(costs < costs[next_point_index], axis=1)
+            nondominated_point_mask[next_point_index] = True
+            is_efficient = is_efficient[
+                nondominated_point_mask
+            ]  # Remove dominated points
+            costs = costs[nondominated_point_mask]
+            next_point_index = np.sum(nondominated_point_mask[:next_point_index]) + 1
+        return is_efficient
+
+    costs = np.array([[costs[metrics[0]], costs[metrics[1]]] for _, costs in history])
+    # average_costs = np.array([np.average(cost) for _, cost in costs])
+    # configs = [config for config, _ in history]
+
+    pareto_costs = [costs[i] for i in _get_pareto_indeces(costs)]
+    # average_pareto_costs = [average_costs[i] for i in get_pareto_indeces(costs)]
+    # pareto_configs = [configs[i] for i in get_pareto_indeces(costs)]
+
+    return {"costs": costs, "pareto_costs": pareto_costs}
+
+
+def get_pareto_from_smac(smac: AbstractFacade, incumbents: list[Configuration]) -> None:
     """Plots configurations from SMAC and highlights the best configurations in a Pareto front."""
-    average_costs = []
-    average_pareto_costs = []
+    costs = []
+    pareto_costs = []
     for config in smac.runhistory.get_configs():
         # Since we use multiple seeds, we have to average them to get only one cost value pair for each configuration
         average_cost = smac.runhistory.average_cost(config)
 
         if config in incumbents:
-            average_pareto_costs += [average_cost]
+            pareto_costs += [average_cost]
         else:
-            average_costs += [average_cost]
+            costs += [average_cost]
 
+    return {"costs": costs, "pareto_costs": pareto_costs}
+
+
+def plot_pareto(summary, metrics, output_path):
     # Let's work with a numpy array
-    costs = np.vstack(average_costs)
-    pareto_costs = np.vstack(average_pareto_costs)
+    costs = np.vstack(summary["costs"])
+    pareto_costs = np.vstack(summary["pareto_costs"])
     pareto_costs = pareto_costs[pareto_costs[:, 0].argsort()]  # Sort them
 
     costs_x, costs_y = costs[:, 0], costs[:, 1]
@@ -47,7 +76,7 @@ def plot_pareto(smac: AbstractFacade, incumbents: list[Configuration]) -> None:
     )
 
     plt.title("Pareto-Front")
-    plt.xlabel(smac.scenario.objectives[0])
-    plt.ylabel(smac.scenario.objectives[1])
+    plt.xlabel(metrics[0])
+    plt.ylabel(metrics[1])
     plt.legend()
-    plt.show()
+    plt.savefig(output_path)
