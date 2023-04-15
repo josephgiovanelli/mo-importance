@@ -1,4 +1,6 @@
 from __future__ import annotations
+import logging
+import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,6 +12,8 @@ from smac.facade.abstract_facade import AbstractFacade
 
 __copyright__ = "Copyright 2021, AutoML.org Freiburg-Hannover"
 __license__ = "3-clause BSD"
+
+logging.getLogger("matplotlib.font_manager").setLevel(logging.ERROR)
 
 
 def get_pareto_from_history(history: list[tuple[Configuration, dict]], metrics):
@@ -53,7 +57,7 @@ def get_pareto_from_smac(smac: AbstractFacade, incumbents: list[Configuration]) 
     return {"costs": costs, "pareto_costs": pareto_costs}
 
 
-def plot_pareto(summary, metrics, output_path):
+def plot_pareto(summary, objectives, output_path):
     # Let's work with a numpy array
     costs = np.vstack(summary["costs"])
     pareto_costs = np.vstack(summary["pareto_costs"])
@@ -62,9 +66,10 @@ def plot_pareto(summary, metrics, output_path):
     costs_x, costs_y = costs[:, 0], costs[:, 1]
     pareto_costs_x, pareto_costs_y = pareto_costs[:, 0], pareto_costs[:, 1]
 
-    plt.scatter(costs_x, costs_y, marker="x", label="Configuration")
-    plt.scatter(pareto_costs_x, pareto_costs_y, marker="x", c="r", label="Incumbent")
-    plt.step(
+    fig, ax = plt.subplots()
+    ax.scatter(costs_x, costs_y, marker="x", label="Configuration")
+    ax.scatter(pareto_costs_x, pareto_costs_y, marker="x", c="r", label="Incumbent")
+    ax.step(
         [pareto_costs_x[0]]
         + pareto_costs_x.tolist()
         + [np.max(costs_x)],  # We add bounds
@@ -75,8 +80,21 @@ def plot_pareto(summary, metrics, output_path):
         linestyle=":",
     )
 
-    plt.title("Pareto-Front")
-    plt.xlabel(metrics[0])
-    plt.ylabel(metrics[1])
-    plt.legend()
-    plt.savefig(output_path)
+    metrics = [c["metric"] for c in objectives]
+    ax.set_xlim([objectives[0]["lower_bound"], objectives[0]["upper_bound"]])
+    ax.set_ylim([objectives[1]["lower_bound"], objectives[1]["upper_bound"]])
+    ax.set_title("Pareto-Front")
+    ax.set_xlabel(metrics[0])
+    ax.set_ylabel(metrics[1])
+    ax.legend()
+    fig.savefig(output_path)
+
+
+def plot_pareto_from_history(
+    history: list[tuple[Configuration, dict]], objectives, output_path
+):
+    plot_pareto(
+        get_pareto_from_history(history, [c["metric"] for c in objectives]),
+        objectives,
+        output_path,
+    )

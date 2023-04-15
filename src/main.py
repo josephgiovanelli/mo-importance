@@ -14,9 +14,10 @@ from inner_loop.pareto_mlp import ParetoMLP
 
 from utils.argparse import parse_args
 from utils.dataset import load_dataset_from_openml
-from utils.plot import plot_pareto, get_pareto_from_history
+from utils.plot import plot_pareto_from_history
 from utils.sample import grid_search, random_search
 from utils.common import make_dir
+from utils.input import read_configuration
 
 __copyright__ = "Copyright 2021, AutoML.org Freiburg-Hannover"
 __license__ = "3-clause BSD"
@@ -24,29 +25,33 @@ __license__ = "3-clause BSD"
 
 if __name__ == "__main__":
     args, _ = parse_args()
-    np.random.seed(args.seed)
+    conf = read_configuration(args.conf_file)
 
-    X, y, _ = load_dataset_from_openml(args.dataset)
+    np.random.seed(conf["seed"])
+
+    X, y, _ = load_dataset_from_openml(conf["dataset"])
     mlp = ParetoMLP(
         X=X,
         y=y,
-        metrics=args.metrics,
-        modes=args.modes,
-        application="fairness",
-        grid_samples=10,
+        metrics=conf["obj_metrics"],
+        modes=conf["obj_modes"],
+        application=conf["use_case"],
+        grid_samples=conf["grid_samples"],
     )
     # grid_samples = grid_search(configspace=mlp.configspace, num_steps=2)
-    random_samples = random_search(configspace=mlp.configspace, num_samples=50)
+    random_samples = random_search(
+        configspace=mlp.configspace, num_samples=conf["random_samples"]
+    )
 
     paretos = []
     for sample in random_samples:
-        paretos += [mlp.get_pareto(sample, args.seed)]
+        paretos += [mlp.get_pareto(sample, conf["seed"])]
 
     for idx, history in enumerate(paretos):
-        plot_pareto(
-            get_pareto_from_history(history, args.metrics),
-            args.metrics,
-            os.path.join(make_dir(args.output_path), str(idx)),
+        plot_pareto_from_history(
+            history,
+            conf["objectives"],
+            os.path.join(make_dir(conf["output_folder"]), str(idx)),
         )
 
     # # Define our environment variables
