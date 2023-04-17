@@ -23,6 +23,7 @@ from smac.model.random_model import RandomModel
 from sklearn.model_selection import StratifiedKFold, cross_validate
 from sklearn.neural_network import MLPClassifier
 from my_model.my_grid_model import MyGridModel
+from utils.input import ConfDict
 
 from utils.sample import grid_search
 
@@ -30,16 +31,10 @@ from inner_loop.mlp import MLP
 
 
 class ParetoMLP(MLP):
-    def __init__(self, X, y, metrics, modes, application, grid_samples):
-        self.X = X
-        self.y = y
-        self.metrics = metrics
-        self.modes = modes
-        self.application = application
+    def __init__(self):
         self.p_star = super().configspace.get_hyperparameter(
-            "alpha" if self.application == "fairness" else "n_layer"
+            "alpha" if ConfDict()["use_case"] == "fairness" else "n_layer"
         )
-        self.grid_samples = grid_samples
 
     @property
     def configspace(self) -> ConfigurationSpace:
@@ -80,5 +75,7 @@ class ParetoMLP(MLP):
                         self.__union_configs(random_config, grid_config), seed, budget
                     ),
                 )
-                for grid_config in grid_search(self.grid_configspace, self.grid_samples)
+                for grid_config in grid_search(
+                    self.grid_configspace, ConfDict()["grid_samples"]
+                )
             ]

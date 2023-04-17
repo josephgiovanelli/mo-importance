@@ -12,19 +12,15 @@ from ConfigSpace import (
     Integer,
 )
 
-from ConfigSpace import Configuration
-
 from sklearn.model_selection import StratifiedKFold, cross_validate
 from sklearn.neural_network import MLPClassifier
 
+# from codecarbon import EmissionsTracker
+
+from utils.input import ConfDict
+
 
 class MLP:
-    def __init__(self, X, y, metrics, modes):
-        self.X = X
-        self.y = y
-        self.metrics = metrics
-        self.modes = modes
-
     @property
     def configspace(self) -> ConfigurationSpace:
         return ConfigurationSpace(
@@ -52,6 +48,9 @@ class MLP:
             warnings.filterwarnings("ignore")
 
             try:
+                # tracker = EmissionsTracker()
+                # tracker.start()
+
                 classifier = MLPClassifier(
                     hidden_layer_sizes=[config["n_neurons"]] * config["n_layer"],
                     solver=config["solver"],
@@ -59,7 +58,7 @@ class MLP:
                     learning_rate_init=config["learning_rate_init"],
                     alpha=config["alpha"],
                     max_iter=int(np.ceil(budget)),
-                    random_state=seed,
+                    random_state=ConfDict()["seed"],
                 )
 
                 # Returns the 5-fold cross validation accuracy
@@ -69,9 +68,9 @@ class MLP:
 
                 scores = cross_validate(
                     classifier,
-                    self.X.copy(),
-                    self.y.copy(),
-                    scoring=self.metrics,
+                    ConfDict()["X"].copy(),
+                    ConfDict()["y"].copy(),
+                    scoring=ConfDict()["obj_metrics"],
                     cv=cv,
                     return_estimator=False,
                     return_train_score=False,
@@ -79,10 +78,12 @@ class MLP:
                     error_score="raise",
                 )
 
+                # tracker.stop()
+
                 return {
                     f"{metric}": np.mean(scores["test_" + metric])
-                    * (-1 if self.modes[idx] == "max" else 1)
-                    for idx, metric in enumerate(self.metrics)
+                    * (-1 if ConfDict()["obj_modes"][idx] == "max" else 1)
+                    for idx, metric in enumerate(ConfDict()["obj_metrics"])
                 }
             except:
                 print("Something went wrong!")

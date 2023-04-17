@@ -4,8 +4,6 @@ import os
 
 import numpy as np
 
-from ConfigSpace import Configuration
-
 from smac import HyperparameterOptimizationFacade as HPOFacade
 from smac import Scenario
 from smac.model.random_model import RandomModel
@@ -17,7 +15,7 @@ from utils.dataset import load_dataset_from_openml
 from utils.plot import plot_pareto_from_history
 from utils.sample import grid_search, random_search
 from utils.common import make_dir
-from utils.input import read_configuration
+from utils.input import ConfDict, create_configuration
 
 __copyright__ = "Copyright 2021, AutoML.org Freiburg-Hannover"
 __license__ = "3-clause BSD"
@@ -25,33 +23,24 @@ __license__ = "3-clause BSD"
 
 if __name__ == "__main__":
     args, _ = parse_args()
-    conf = read_configuration(args.conf_file)
+    create_configuration(args.conf_file)
 
-    np.random.seed(conf["seed"])
+    np.random.seed(ConfDict()["seed"])
 
-    X, y, _ = load_dataset_from_openml(conf["dataset"])
-    mlp = ParetoMLP(
-        X=X,
-        y=y,
-        metrics=conf["obj_metrics"],
-        modes=conf["obj_modes"],
-        application=conf["use_case"],
-        grid_samples=conf["grid_samples"],
-    )
+    mlp = ParetoMLP()
     # grid_samples = grid_search(configspace=mlp.configspace, num_steps=2)
     random_samples = random_search(
-        configspace=mlp.configspace, num_samples=conf["random_samples"]
+        configspace=mlp.configspace, num_samples=ConfDict()["random_samples"]
     )
 
     paretos = []
     for sample in random_samples:
-        paretos += [mlp.get_pareto(sample, conf["seed"])]
+        paretos += [mlp.get_pareto(sample)]
 
     for idx, history in enumerate(paretos):
         plot_pareto_from_history(
             history,
-            conf["objectives"],
-            os.path.join(make_dir(conf["output_folder"]), str(idx)),
+            os.path.join(make_dir(ConfDict()["output_folder"]), str(idx)),
         )
 
     # # Define our environment variables
