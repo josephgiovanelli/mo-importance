@@ -33,7 +33,7 @@ from inner_loop.mlp import MLP
 class ParetoMLP(MLP):
     def __init__(self):
         self.p_star = super().configspace.get_hyperparameter(
-            "alpha" if ConfDict()["use_case"] == "fairness" else "n_layer"
+            "alpha" if ConfDict()["use_case"] == "FAIRNESS" else "n_layer"
         )
 
     @property

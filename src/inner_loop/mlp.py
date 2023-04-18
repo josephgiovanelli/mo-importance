@@ -12,10 +12,31 @@ from ConfigSpace import (
     Integer,
 )
 
-from sklearn.model_selection import StratifiedKFold, cross_validate
+import sklearn
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import (
+    accuracy_score,
+    balanced_accuracy_score,
+    top_k_accuracy_score,
+    average_precision_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
+
+# from sklearn.model_selection import StratifiedKFold, cross_validate
 from sklearn.neural_network import MLPClassifier
 
-# from codecarbon import EmissionsTracker
+from fairlearn.metrics import (
+    demographic_parity_difference,
+    equalized_odds_difference,
+    demographic_parity_ratio,
+    equalized_odds_ratio,
+)
+
+from codecarbon import EmissionsTracker
 
 from utils.input import ConfDict
 
@@ -44,46 +65,62 @@ class MLP:
         seed: int = 0,
         budget: int = 10,
     ) -> dict[str, float]:
+        def __adapt_to_mode(value, mode):
+            return value if mode == "min" else 1 - value
+
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
 
-            try:
-                # tracker = EmissionsTracker()
-                # tracker.start()
+            # try:
+            classifier = MLPClassifier(
+                hidden_layer_sizes=[config["n_neurons"]] * config["n_layer"],
+                solver=config["solver"],
+                activation=config["activation"],
+                learning_rate_init=config["learning_rate_init"],
+                alpha=config["alpha"],
+                max_iter=int(np.ceil(budget)),
+                random_state=ConfDict()["seed"],
+            )
 
-                classifier = MLPClassifier(
-                    hidden_layer_sizes=[config["n_neurons"]] * config["n_layer"],
-                    solver=config["solver"],
-                    activation=config["activation"],
-                    learning_rate_init=config["learning_rate_init"],
-                    alpha=config["alpha"],
-                    max_iter=int(np.ceil(budget)),
-                    random_state=ConfDict()["seed"],
-                )
+            X_train, X_test, y_train, y_test = train_test_split(
+                ConfDict()["X"], ConfDict()["y"], test_size=0.33, random_state=seed
+            )
 
-                # Returns the 5-fold cross validation accuracy
-                cv = StratifiedKFold(
-                    n_splits=5, random_state=seed, shuffle=True
-                )  # to make CV splits consistent
+            if ConfDict()["use_case"] == "green automl":
+                tracker = EmissionsTracker()
+                tracker.start()
 
-                scores = cross_validate(
-                    classifier,
-                    ConfDict()["X"].copy(),
-                    ConfDict()["y"].copy(),
-                    scoring=ConfDict()["obj_metrics"],
-                    cv=cv,
-                    return_estimator=False,
-                    return_train_score=False,
-                    verbose=0,
-                    error_score="raise",
-                )
+            classifier = classifier.fit(X_train, y_train)
 
-                # tracker.stop()
-
-                return {
-                    f"{metric}": np.mean(scores["test_" + metric])
-                    * (-1 if ConfDict()["obj_modes"][idx] == "max" else 1)
-                    for idx, metric in enumerate(ConfDict()["obj_metrics"])
+            if ConfDict()["use_case"] == "green automl":
+                use_case_dict = {
+                    f"""{ConfDict()["use_case_objective"]["metric"]}""": __adapt_to_mode(
+                        tracker.stop(), ConfDict()["performance_objective"]["mode"]
+                    )
                 }
-            except:
-                print("Something went wrong!")
+
+            y_pred = classifier.predict(X_test)
+
+            performance_dict = {
+                f"""{ConfDict()["performance_objective"]["metric"]}""": globals()[
+                    f"""{ConfDict()["performance_objective"]["metric"]}"""
+                ](y_test, y_pred)
+            }
+
+            if ConfDict()["use_case"] == "fairness":
+                use_case_dict = {
+                    f"""{ConfDict()["use_case_objective"]["metric"]}""": globals()[
+                        f"""{ConfDict()["use_case_objective"]["metric"]}"""
+                    ](
+                        y_test,
+                        y_pred,
+                        sensitive_features=X_test[
+                            :, ConfDict()["use_case_objective"]["sensitive_feature_idx"]
+                        ],
+                    )
+                }
+
+            return {**performance_dict, **use_case_dict}
+
+            # except:
+            #     print("Something went wrong!")

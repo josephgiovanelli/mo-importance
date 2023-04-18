@@ -1,0 +1,23 @@
+{
+    "dataset": "adult",
+    "use_case": "fairness",
+    "performance_objective": {
+        "metric": "accuracy_score",
+        "mode": "max",
+        "upper_bound": 1,
+        "lower_bound": 0
+    },
+    "use_case_objective": {
+        "metric": "demographic_parity_ratio",
+        "sensitive_feature": "sex",
+        "mode": "max",
+        "upper_bound": 1,
+        "lower_bound": 0
+    },
+    "time_budget": 30,
+    "iterations": 200,
+    "grid_samples": 2,
+    "random_samples": 2,
+    "output_folder": "trial",
+    "seed": 0
+}
