@@ -131,7 +131,11 @@ class MLP:
             pipeline = self.__build_pipeline(config, budget)
 
             X_train, X_test, y_train, y_test = train_test_split(
-                ConfDict()["X"], ConfDict()["y"], test_size=0.33, random_state=seed
+                ConfDict()["X"],
+                ConfDict()["y"],
+                test_size=0.33,
+                stratify=ConfDict()["y"],
+                random_state=seed,
             )
 
             if ConfDict()["use_case"] == "green_automl":
