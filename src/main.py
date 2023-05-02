@@ -16,6 +16,7 @@ from utils.plot import plot_pareto_from_history
 from utils.sample import grid_search, random_search
 from utils.common import make_dir
 from utils.input import ConfDict, create_configuration
+from utils.output import adapt_paretos
 
 __copyright__ = "Copyright 2021, AutoML.org Freiburg-Hannover"
 __license__ = "3-clause BSD"
@@ -34,8 +35,11 @@ if __name__ == "__main__":
     )
 
     paretos = []
-    for sample in random_samples:
+    for idx, sample in enumerate(random_samples):
+        print(f"{idx}th conf of random sampling: {sample}")
         paretos += [mlp.get_pareto(sample)]
+
+    adapt_paretos(paretos)
 
     for idx, history in enumerate(paretos):
         plot_pareto_from_history(

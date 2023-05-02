@@ -33,7 +33,7 @@ from inner_loop.mlp import MLP
 class ParetoMLP(MLP):
     def __init__(self):
         self.p_star = super().configspace.get_hyperparameter(
-            "alpha" if ConfDict()["use_case"] == "FAIRNESS" else "n_layer"
+            "alpha" if ConfDict()["use_case"] == "fairness" else "n_layer"
         )
 
     @property
@@ -43,12 +43,16 @@ class ParetoMLP(MLP):
                 k: v
                 for k, v in super().configspace.get_hyperparameters_dict().items()
                 if k != self.p_star.name
-            }
+            },
+            seed=ConfDict()["seed"],
         )
 
     @property
     def grid_configspace(self) -> ConfigurationSpace:
-        return ConfigurationSpace({self.p_star.name: self.p_star})
+        return ConfigurationSpace(
+            {self.p_star.name: self.p_star},
+            seed=ConfDict()["seed"],
+        )
 
     def __union_configs(
         self, random_config: Configuration, grid_config: Configuration
@@ -68,14 +72,33 @@ class ParetoMLP(MLP):
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
 
-            return [
-                (
+            # return [
+            #     (
+            #         self.__union_configs(random_config, grid_config),
+            #         self.train(
+            #             self.__union_configs(random_config, grid_config), seed, budget
+            #         ),
+            #     )
+            #     for grid_config in grid_search(
+            #         self.grid_configspace, ConfDict()["grid_samples"]
+            #     )
+            # ]
+
+            result = []
+            for idx, grid_config in enumerate(
+                grid_search(self.grid_configspace, ConfDict()["grid_samples"])
+            ):
+                print(f"    {idx}th conf of grid sampling: {grid_config}")
+                temp_result = self.train(
                     self.__union_configs(random_config, grid_config),
-                    self.train(
-                        self.__union_configs(random_config, grid_config), seed, budget
-                    ),
+                    seed,
+                    budget,
                 )
-                for grid_config in grid_search(
-                    self.grid_configspace, ConfDict()["grid_samples"]
+                result.append(
+                    (
+                        self.__union_configs(random_config, grid_config),
+                        temp_result,
+                    )
                 )
-            ]
+                print(f"    {temp_result}")
+            return result
