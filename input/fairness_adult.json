@@ -3,9 +3,7 @@
     "use_case": "fairness",
     "performance_objective": {
         "metric": "accuracy_score",
-        "mode": "max",
-        "upper_bound": 1,
-        "lower_bound": 0
+        "mode": "max"
     },
     "use_case_objective": {
         "metric": "demographic_parity_ratio",
