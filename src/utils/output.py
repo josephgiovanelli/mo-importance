@@ -18,7 +18,7 @@ def adapt_paretos(paretos):
                     )
 
         for bound in ["upper_bound", "lower_bound"]:
-            func = np.max if bound == "upper_bound" else "lower_bound"
+            func = np.max if bound == "upper_bound" else np.min
             if bound not in ConfDict()["objectives"][obj_idx]:
                 ConfDict()["objectives"][obj_idx][bound] = func(
                     [
