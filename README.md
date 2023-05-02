@@ -7,51 +7,9 @@ There are two options:
 
 # Project structure
 
-- ```.devcontainer```: configuration to instantiate a dev container w/ vscode
-- ```data```: raw agro data for the analysis
-- ```doc```: documentation explaining data and related semantic
-- ```scripts```: starting point for reproducibility
-- ```src```: source code
-
-# data
-
-- ```et0```: evapotranspiration every 24 hours calculated with the two formulas
-- ```interp_obs```: fine grained soil moisture profiles calulated with the bilinear interpolation from the ```raw_obs```
-- ```meteo```: weather data
-- ```raw_obs```: samples of the water potential sensors and the related water content values (exploiting an ad-hoc retention curve)
-- ```sim```: fine grained soil moisture profiles extracted from a soil & crop simulator
-- ```water```: precipitation and irrigation data
-
-# doc
-
-- ```doc.pdf```: documentation explaining the semantic of the data (our field is ```T1 basso```)
-- ```water_content_to_water_quantity```: link to a Google Sheet explaining the calulation of the water quantity from the water content (and the volume and teh density of each cell)
-
-# scripts
-
-- ```start.sh```: it runs the et0 calculation on Unix-like OS
-- ```start.bat```: it runs the et0 calculation on Windows-like OS
-
-# src
-
-- ```et0```: it contains all the formulas for calculating the et0
-- ```calculate_et0```: calculate et0 (details in the following section)
-- ```interpolate_gp```: interpolate raw data (raw_obs) with a bilinear profile function and produce fine-grained soil moisture profiles (interp_data). You can run, for example: ```python src/interpolate.py --input-file data/raw_obs/water_content.csv --output-file data/obs/water_content.csv```
-- ```utils.py```: some input and output utils
-
-
-# ET0 Formulas
-
-## Hargreaves
-
-Still doesn't implemented:
-
-<img width="543" alt="image" src="https://user-images.githubusercontent.com/41596745/207830808-f53a37d2-efca-423c-a0c2-dd3d0600a806.png">
-
-## Penman Monteith
-
-The formula is explained [here](https://en.wikipedia.org/wiki/Penman%E2%80%93Monteith_equation) and is encoded in the et0 package.
-To calculate the et0 from meteo data, run the following python file:
 ```
-python src/calculate_et0.py
+git clone https://github.com/josephgiovanelli/mo-importance.git
+cd mo-importance/
+sudo chmod 777 scripts/*
+sudo ./scripts/start.sh 0.0.1 fairness_adult.json
 ```
