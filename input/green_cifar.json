@@ -1,5 +1,5 @@
 {
-    "dataset": "CIFAR_10_small",
+    "dataset": "CIFAR_10",
     "use_case": "green_automl",
     "performance_objective": {
         "metric": "accuracy_score",
