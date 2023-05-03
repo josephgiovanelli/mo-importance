@@ -19,7 +19,7 @@ __license__ = "3-clause BSD"
 logging.getLogger("matplotlib.font_manager").setLevel(logging.ERROR)
 
 
-def get_pareto_from_history(history: list[tuple[Configuration, dict]]):
+def get_pareto_from_history(history: list[dict]):
     def _get_pareto_indeces(costs):
         is_efficient = np.arange(costs.shape[0])
         next_point_index = 0  # Next index in the is_efficient array to search for
@@ -35,8 +35,11 @@ def get_pareto_from_history(history: list[tuple[Configuration, dict]]):
 
     costs = np.array(
         [
-            [costs[ConfDict()["obj_metrics"][0]], costs[ConfDict()["obj_metrics"][1]]]
-            for _, costs in history
+            [
+                elem["evaluation"][ConfDict()["obj_metrics"][0]],
+                elem["evaluation"][ConfDict()["obj_metrics"][1]],
+            ]
+            for elem in history
         ]
     )
     # average_costs = np.array([np.average(cost) for _, cost in costs])
@@ -128,7 +131,7 @@ def plot_pareto(summary, output_path):
     fig.savefig(output_path)
 
 
-def plot_pareto_from_history(history: list[tuple[Configuration, dict]], output_path):
+def plot_pareto_from_history(history: list[dict], output_path):
     plot_pareto(
         get_pareto_from_history(history),
         output_path,

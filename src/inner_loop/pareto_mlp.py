@@ -90,13 +90,15 @@ class ParetoMLP(MLP):
             ):
                 print(f"    {idx}th conf of grid sampling")
                 result.append(
-                    (
-                        self.__union_configs(random_config, grid_config),
-                        self.train(
+                    {
+                        "config": self.__union_configs(
+                            random_config, grid_config
+                        ).get_dictionary(),
+                        "evaluation": self.train(
                             self.__union_configs(random_config, grid_config),
                             seed,
                             budget,
                         ),
-                    )
+                    }
                 )
             return result

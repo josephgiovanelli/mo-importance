@@ -1,5 +1,6 @@
 import os
 import json
+from utils.common import make_dir
 
 from utils.dataset import load_dataset_from_openml
 
@@ -16,6 +17,8 @@ def create_configuration(file_name: str):
         conf = json.load(file)
 
     conf["output_folder"] = os.path.join("output", conf["output_folder"])
+    make_dir(conf["output_folder"])
+
     conf["objectives"] = [conf["performance_objective"], conf["use_case_objective"]]
     conf["obj_metrics"] = [c["metric"] for c in conf["objectives"]]
     conf["obj_modes"] = [c["mode"] for c in conf["objectives"]]

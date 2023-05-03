@@ -14,9 +14,14 @@ from utils.argparse import parse_args
 from utils.dataset import load_dataset_from_openml
 from utils.plot import plot_pareto_from_history
 from utils.sample import grid_search, random_search
-from utils.common import make_dir
 from utils.input import ConfDict, create_configuration
-from utils.output import adapt_paretos
+from utils.output import (
+    adapt_paretos,
+    save_paretos,
+    check_dump,
+    load_dump,
+    update_config,
+)
 
 __copyright__ = "Copyright 2021, AutoML.org Freiburg-Hannover"
 __license__ = "3-clause BSD"
@@ -28,23 +33,29 @@ if __name__ == "__main__":
 
     np.random.seed(ConfDict()["seed"])
 
-    mlp = ParetoMLP()
-    # grid_samples = grid_search(configspace=mlp.configspace, num_steps=2)
-    random_samples = random_search(
-        configspace=mlp.configspace, num_samples=ConfDict()["random_samples"]
-    )
+    if check_dump():
+        paretos = load_dump()
+    else:
+        mlp = ParetoMLP()
+        # grid_samples = grid_search(configspace=mlp.configspace, num_steps=2)
+        random_samples = random_search(
+            configspace=mlp.configspace, num_samples=ConfDict()["random_samples"]
+        )
 
-    paretos = []
-    for idx, sample in enumerate(random_samples):
-        print(f"{idx}th conf of random sampling")
-        paretos += [mlp.get_pareto(sample)]
+        paretos = []
+        for idx, sample in enumerate(random_samples):
+            print(f"{idx}th conf of random sampling")
+            paretos += [mlp.get_pareto(sample)]
 
-    adapt_paretos(paretos)
+        adapt_paretos(paretos)
+        save_paretos(paretos)
+
+    update_config(paretos)
 
     for idx, history in enumerate(paretos):
         plot_pareto_from_history(
             history,
-            os.path.join(make_dir(ConfDict()["output_folder"]), str(idx)),
+            os.path.join(ConfDict()["output_folder"], str(idx)),
         )
 
     # # Define our environment variables
