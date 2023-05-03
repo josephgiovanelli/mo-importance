@@ -1,6 +1,7 @@
 # %%
 from __future__ import annotations
 import os
+import time
 
 import numpy as np
 
@@ -33,6 +34,8 @@ if __name__ == "__main__":
 
     np.random.seed(ConfDict()["seed"])
 
+    start_time = time.time()
+
     if check_dump():
         paretos = load_dump()
     else:
@@ -49,6 +52,8 @@ if __name__ == "__main__":
 
         adapt_paretos(paretos)
         save_paretos(paretos)
+
+    print(f"Optimization time: {time.time() - start_time}")
 
     update_config(paretos)
 
