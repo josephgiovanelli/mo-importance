@@ -18,11 +18,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.preprocessing import OneHotEncoder, StandardScaler, MinMaxScaler
 from sklearn.metrics import (
     accuracy_score,
     balanced_accuracy_score,
-    top_k_accuracy_score,
     average_precision_score,
     f1_score,
     precision_score,
@@ -52,7 +51,7 @@ class MLP:
     def configspace(self) -> ConfigurationSpace:
         return ConfigurationSpace(
             {
-                "n_layer": Integer("n_layer", (1, 10), default=1),
+                "n_layer": Integer("n_layer", (1, 100), default=1),
                 "n_neurons": Integer("n_neurons", (8, 256), log=True, default=10),
                 "activation": Categorical(
                     "activation", ["logistic", "tanh", "relu"], default="tanh"
@@ -69,7 +68,7 @@ class MLP:
         numeric_transformer = Pipeline(
             steps=[
                 ("impute", SimpleImputer()),
-                ("scaler", StandardScaler()),
+                ("scaler", MinMaxScaler()),
             ]
         )
         categorical_transformer = Pipeline(
