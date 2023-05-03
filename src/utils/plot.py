@@ -94,9 +94,17 @@ def plot_pareto(summary, output_path):
         [pareto_costs_x[0]]
         + pareto_costs_x.tolist()
         + [np.max(costs_x)],  # We add bounds
-        [np.max(costs_y)]
+        [
+            np.max(costs_y)
+            if ConfDict()["obj_modes"][0] == ConfDict()["obj_modes"][1]
+            else np.min(costs_y)
+        ]
         + pareto_costs_y.tolist()
-        + [np.min(pareto_costs_y)],  # We add bounds
+        + [
+            np.min(pareto_costs_y)
+            if ConfDict()["obj_modes"][0] == ConfDict()["obj_modes"][1]
+            else np.max(pareto_costs_y)
+        ],  # We add bounds
         where="post",
         linestyle=":",
     )
