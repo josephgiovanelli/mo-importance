@@ -18,5 +18,6 @@ sudo ./scripts/start.sh 0.0.1
 ```
 .51: stratified + bounds on performance
 .52: no stratified + no bounds on performance
-.51: stratified + no bounds on performance
+.53: stratified + no bounds on performance
+.54: no stratified + bounds on performance
 ```
