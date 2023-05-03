@@ -10,6 +10,7 @@ from ConfigSpace import Configuration
 from smac.facade.abstract_facade import AbstractFacade
 
 from utils.input import ConfDict
+from utils.output import adapt_to_mode
 
 
 __copyright__ = "Copyright 2021, AutoML.org Freiburg-Hannover"
@@ -41,7 +42,20 @@ def get_pareto_from_history(history: list[tuple[Configuration, dict]]):
     # average_costs = np.array([np.average(cost) for _, cost in costs])
     # configs = [config for config, _ in history]
 
-    pareto_costs = [costs[i] for i in _get_pareto_indeces(costs)]
+    pareto_costs = [
+        costs[i]
+        for i in _get_pareto_indeces(
+            np.array(
+                [
+                    [
+                        adapt_to_mode(cost[0], ConfDict()["obj_modes"][0]),
+                        adapt_to_mode(cost[1], ConfDict()["obj_modes"][1]),
+                    ]
+                    for cost in costs
+                ]
+            )
+        )
+    ]
     # average_pareto_costs = [average_costs[i] for i in get_pareto_indeces(costs)]
     # pareto_configs = [configs[i] for i in get_pareto_indeces(costs)]
 
