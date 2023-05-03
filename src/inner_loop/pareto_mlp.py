@@ -88,17 +88,15 @@ class ParetoMLP(MLP):
             for idx, grid_config in enumerate(
                 grid_search(self.grid_configspace, ConfDict()["grid_samples"])
             ):
-                print(f"    {idx}th conf of grid sampling: {grid_config}")
-                temp_result = self.train(
-                    self.__union_configs(random_config, grid_config),
-                    seed,
-                    budget,
-                )
+                print(f"    {idx}th conf of grid sampling")
                 result.append(
                     (
                         self.__union_configs(random_config, grid_config),
-                        temp_result,
+                        self.train(
+                            self.__union_configs(random_config, grid_config),
+                            seed,
+                            budget,
+                        ),
                     )
                 )
-                print(f"    {temp_result}")
             return result

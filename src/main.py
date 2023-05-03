@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
     paretos = []
     for idx, sample in enumerate(random_samples):
-        print(f"{idx}th conf of random sampling: {sample}")
+        print(f"{idx}th conf of random sampling")
         paretos += [mlp.get_pareto(sample)]
 
     adapt_paretos(paretos)
