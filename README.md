@@ -16,8 +16,8 @@ sudo ./scripts/start.sh 0.0.1
 # Machine assignments
 
 ```
-.51: stratified + bounds on performance
-.52: no stratified + no bounds on performance
-.53: stratified + no bounds on performance
-.54: no stratified + bounds on performance
+.51: CIFAR_10_small stratified + bounds on performance
+.52: CIFAR_10 stratified + bounds on performance
+.53: CIFAR_10_small stratified + no bounds on performance
+.54: CIFAR_10 stratified + no bounds on performance
 ```
