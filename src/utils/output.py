@@ -1,3 +1,4 @@
+import math
 import os
 from utils.input import ConfDict
 
@@ -33,6 +34,9 @@ def update_config(paretos):
                         conf["evaluation"][ConfDict()["obj_metrics"][obj_idx]]
                         for pareto in paretos
                         for conf in pareto
+                        if not math.isnan(
+                            conf["evaluation"][ConfDict()["obj_metrics"][obj_idx]]
+                        )
                     ]
                 )
 
