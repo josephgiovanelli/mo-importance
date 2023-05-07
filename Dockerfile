@@ -8,5 +8,7 @@ RUN pip install --upgrade pip && \
     pip install requests && \
     pip install tabulate && \
     pip install future && \
-    rm requirements.txt
+    rm requirements.txt && \
+    pip install git+https://github.com/kiudee/cs-ranking.git && \
+    pip install h5py
 WORKDIR /home

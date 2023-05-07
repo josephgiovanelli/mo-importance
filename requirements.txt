@@ -7,3 +7,4 @@ smac
 openml
 codecarbon
 fairlearn
+torch
