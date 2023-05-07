@@ -2,6 +2,7 @@
 from __future__ import annotations
 import os
 import time
+import random
 
 import numpy as np
 
@@ -32,6 +33,7 @@ if __name__ == "__main__":
     args, _ = parse_args()
     create_configuration(args.conf_file)
 
+    random.seed(ConfDict()["seed"])
     np.random.seed(ConfDict()["seed"])
 
     start_time = time.time()
@@ -39,7 +41,7 @@ if __name__ == "__main__":
     if check_dump():
         paretos = load_dump()
     else:
-        mlp = ParetoMLP()
+        mlp = ParetoMLP("sklearn")
         # grid_samples = grid_search(configspace=mlp.configspace, num_steps=2)
         random_samples = random_search(
             configspace=mlp.configspace, num_samples=ConfDict()["random_samples"]

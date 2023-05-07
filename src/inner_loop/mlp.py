@@ -41,12 +41,22 @@ from fairlearn.metrics import (
 
 
 from codecarbon import EmissionsTracker
+from inner_loop.pytorch_model import PytorchModel
+from inner_loop.sklearn_model import SklearnModel
 
 from utils.input import ConfDict
 from utils.output import adapt_to_mode
 
 
 class MLP:
+    def __init__(self, implementation="sklearn"):
+        if implementation == "sklearn":
+            self.implementation = SklearnModel()
+        elif implementation == "pytorch":
+            self.implementation = PytorchModel()
+        else:
+            raise Exception("Wrong implementation model keyword")
+
     @property
     def configspace(self) -> ConfigurationSpace:
         return ConfigurationSpace(
@@ -61,60 +71,8 @@ class MLP:
                     "learning_rate_init", (0.0001, 1.0), default=0.001, log=True
                 ),
                 "alpha": Float("alpha", (0.000001, 10.0), default=0.0001, log=True),
+                "n_epochs": Integer("n_epochs", (10, 500), default=10, log=True),
             }
-        )
-
-    def __build_pipeline(self, config, budget):
-        numeric_transformer = Pipeline(
-            steps=[
-                ("impute", SimpleImputer()),
-                ("scaler", MinMaxScaler()),
-            ]
-        )
-        categorical_transformer = Pipeline(
-            [
-                ("impute", SimpleImputer(strategy="most_frequent")),
-                ("ohe", OneHotEncoder(handle_unknown="ignore")),
-            ]
-        )
-        preprocessor = ColumnTransformer(
-            transformers=[
-                (
-                    "num",
-                    numeric_transformer,
-                    [
-                        idx
-                        for idx, elem in enumerate(ConfDict()["categorical_indicator"])
-                        if not elem
-                    ],
-                ),
-                (
-                    "cat",
-                    categorical_transformer,
-                    [
-                        idx
-                        for idx, elem in enumerate(ConfDict()["categorical_indicator"])
-                        if elem
-                    ],
-                ),
-            ]
-        )
-
-        classifier = MLPClassifier(
-            hidden_layer_sizes=[config["n_neurons"]] * config["n_layer"],
-            solver=config["solver"],
-            activation=config["activation"],
-            learning_rate_init=config["learning_rate_init"],
-            alpha=config["alpha"],
-            max_iter=int(np.ceil(budget)),
-            random_state=ConfDict()["seed"],
-        )
-
-        return Pipeline(
-            steps=[
-                ("preprocessor", preprocessor),
-                ("classifier", classifier),
-            ]
         )
 
     def train(
@@ -127,7 +85,7 @@ class MLP:
             warnings.filterwarnings("ignore")
 
             # try:
-            pipeline = self.__build_pipeline(config, budget)
+            self.implementation.build_model(config, budget)
 
             X_train, X_test, y_train, y_test = train_test_split(
                 ConfDict()["X"],
@@ -141,7 +99,7 @@ class MLP:
                 tracker = EmissionsTracker()
                 tracker.start()
 
-            pipeline = pipeline.fit(X_train, y_train)
+            self.implementation.train_model(X_train, y_train)
 
             if ConfDict()["use_case"] == "green_automl":
                 use_case_dict = {
@@ -150,7 +108,7 @@ class MLP:
                     )
                 }
 
-            y_pred = pipeline.predict(X_test)
+            y_pred = self.implementation.evaluate_model(X_test)
 
             performance_dict = {
                 f"""{ConfDict()["performance_objective"]["metric"]}""": globals()[
