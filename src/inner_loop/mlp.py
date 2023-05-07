@@ -51,7 +51,7 @@ class MLP:
     def configspace(self) -> ConfigurationSpace:
         return ConfigurationSpace(
             {
-                "n_layer": Integer("n_layer", (1, 100), default=1),
+                "n_layer": Integer("n_layer", (1, 10), default=1),
                 "n_neurons": Integer("n_neurons", (8, 256), log=True, default=10),
                 "activation": Categorical(
                     "activation", ["logistic", "tanh", "relu"], default="tanh"

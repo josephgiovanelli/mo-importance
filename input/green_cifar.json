@@ -11,8 +11,8 @@
     },
     "time_budget": 30,
     "iterations": 200,
-    "grid_samples": 20,
-    "random_samples": 50,
+    "grid_samples": 10,
+    "random_samples": 20,
     "output_folder": "green_cifar",
     "seed": 0
 }
