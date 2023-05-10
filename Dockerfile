@@ -10,5 +10,9 @@ RUN pip install --upgrade pip && \
     pip install future && \
     rm requirements.txt && \
     pip install git+https://github.com/kiudee/cs-ranking.git && \
-    pip install h5py
+    pip install h5py && \
+    git clone https://github.com/automl/HPOBench.git && \
+    cd HPOBench && \
+    pip install .
 WORKDIR /home
+
