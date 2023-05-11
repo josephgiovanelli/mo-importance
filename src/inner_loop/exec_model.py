@@ -78,9 +78,12 @@ class ExecModel:
             y_pred = self.implementation.evaluate_model(X_test)
 
             performance_dict = {
-                f"""{ConfDict()["performance_objective"]["metric"]}""": globals()[
-                    f"""{ConfDict()["performance_objective"]["metric"]}"""
-                ](y_test, y_pred)
+                f"""{ConfDict()["performance_objective"]["metric"]}""": adapt_to_mode(
+                    globals()[f"""{ConfDict()["performance_objective"]["metric"]}"""](
+                        y_test, y_pred
+                    ),
+                    ConfDict()["performance_objective"]["mode"],
+                )
             }
 
             if ConfDict()["use_case"] == "fairness":
