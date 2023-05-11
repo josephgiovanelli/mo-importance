@@ -130,6 +130,7 @@ dmypy.json
 
 # vscode
 vscode
+.vscode
 
 # smac
 smac3_output
