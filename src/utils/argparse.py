@@ -10,7 +10,7 @@ def parse_args():
         "--conf_file",
         nargs="?",
         type=str,
-        default="trial.json",
+        default="green_mnist.json",
         help="configuration file name",
     )
 

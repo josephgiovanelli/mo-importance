@@ -41,7 +41,7 @@ if __name__ == "__main__":
     if check_dump():
         paretos = load_dump()
     else:
-        mlp = ParetoMLP("sklearn")
+        mlp = ParetoMLP("lcbench")
         # grid_samples = grid_search(configspace=mlp.configspace, num_steps=2)
         random_samples = random_search(
             configspace=mlp.configspace, num_samples=ConfDict()["random_samples"]
