@@ -34,7 +34,7 @@ class ParetoMLP(MLP):
     def __init__(self, implementation="sklearn"):
         super().__init__(implementation)
         self.p_star = super().configspace.get_hyperparameter(
-            "alpha" if ConfDict()["use_case"] == "fairness" else "num_layers"
+            "alpha" if ConfDict()["use_case"] == "fairness" else "epoch"
         )
 
     @property
@@ -89,17 +89,21 @@ class ParetoMLP(MLP):
             for idx, grid_config in enumerate(
                 grid_search(self.grid_configspace, ConfDict()["grid_samples"])
             ):
-                print(f"    {idx}th conf of grid sampling")
-                result.append(
-                    {
-                        "config": self.__union_configs(
-                            random_config, grid_config
-                        ).get_dictionary(),
-                        "evaluation": self.train(
-                            self.__union_configs(random_config, grid_config),
-                            seed,
-                            budget,
-                        ),
-                    }
-                )
+                if (
+                    grid_config.get_dictionary()["epoch"] > 1
+                    and grid_config.get_dictionary()["epoch"] < 52
+                ):
+                    # print(f"    {idx}th conf of grid sampling")
+                    result.append(
+                        {
+                            "config": self.__union_configs(
+                                random_config, grid_config
+                            ).get_dictionary(),
+                            "evaluation": self.train(
+                                self.__union_configs(random_config, grid_config),
+                                seed,
+                                budget,
+                            ),
+                        }
+                    )
             return result

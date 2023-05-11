@@ -5,7 +5,7 @@ import warnings
 import numpy as np
 
 
-from ConfigSpace import ConfigurationSpace, Configuration
+from ConfigSpace import ConfigurationSpace, Configuration, Integer
 
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
@@ -28,31 +28,44 @@ class LCBenchModel:
         local_config.init_config()
         local_config.set_data_path("/yahpo_data-1.0")
         self.bench = benchmark_set.BenchmarkSet("lcbench")
-        self.bench.set_instance("189908")
+        self.bench.set_instance(ConfDict()["task"])
 
     @property
     def configspace(self) -> ConfigurationSpace:
-        return self.bench.get_opt_space(
-            drop_fidelity_params=True, seed=ConfDict()["seed"]
+        default_space = self.bench.get_opt_space(
+            # drop_fidelity_params=True,
+            seed=ConfDict()["seed"]
+        ).get_hyperparameters_dict()
+
+        return ConfigurationSpace(
+            {
+                k: v
+                if k != "epoch"
+                else Integer("epoch", (2, 51), default=26, log=False)
+                for k, v in default_space.items()
+            },
+            seed=ConfDict()["seed"],
         )
 
-    def get_carbon_emission(self, computation_time):
+    def get_energy_consumption(self, computation_time):
         # Power consumption in watts (W) for Intel Xeon Gold 6242
         power_consumption = 150
 
         # Energy consumption in watt-hours (Wh)
         energy_consumption = power_consumption * (computation_time / 3600)
 
-        # Carbon intensity in kilograms of CO2 per kilowatt-hour (kgCO2/kWh) in Germany in 2021
-        carbon_intensity = 0.347
+        # # Carbon intensity in kilograms of CO2 per kilowatt-hour (kgCO2/kWh) in Germany in 2021
+        # carbon_intensity = 0.347
 
-        # Convert energy consumption to kilowatt-hours (kWh)
-        energy_consumption_kwh = energy_consumption / 1000
+        # # Convert energy consumption to kilowatt-hours (kWh)
+        # energy_consumption_kwh = energy_consumption / 1000
 
-        # Calculate carbon emissions in kilograms of CO2 (kgCO2)
-        carbon_emissions = energy_consumption_kwh * carbon_intensity
+        # # Calculate carbon emissions in kilograms of CO2 (kgCO2)
+        # carbon_emissions = energy_consumption_kwh * carbon_intensity
 
-        return carbon_emissions
+        # return carbon_emissions
+
+        return energy_consumption
 
     def train(
         self,
@@ -62,12 +75,12 @@ class LCBenchModel:
     ) -> dict[str, float]:
         with warnings.catch_warnings():
             value = config.get_dictionary()
-            value["epoch"] = int(np.ceil(budget))
+            # value["epoch"] = int(np.ceil(budget))
             results_list = self.bench.objective_function(value, seed=ConfDict()["seed"])
             if ConfDict()["use_case"] == "green_automl":
                 use_case_dict = {
                     f"""{ConfDict()["use_case_objective"]["metric"]}""": adapt_to_mode(
-                        self.get_carbon_emission(results_list[0]["time"]),
+                        self.get_energy_consumption(results_list[0]["time"]),
                         ConfDict()["use_case_objective"]["mode"],
                     )
                 }

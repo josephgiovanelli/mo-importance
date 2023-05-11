@@ -1,6 +1,5 @@
 from __future__ import annotations
 import logging
-import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -124,7 +123,7 @@ def plot_pareto(summary, output_path):
             ConfDict()["objectives"][1]["upper_bound"],
         ]
     )
-    ax.set_title("Pareto-Front")
+    ax.set_title(ConfDict()["task"])
     ax.set_xlabel(ConfDict()["obj_metrics"][0])
     ax.set_ylabel(ConfDict()["obj_metrics"][1])
     ax.legend()

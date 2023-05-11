@@ -36,7 +36,7 @@ if __name__ == "__main__":
     random.seed(ConfDict()["seed"])
     np.random.seed(ConfDict()["seed"])
 
-    start_time = time.time()
+    # start_time = time.time()
 
     if check_dump():
         paretos = load_dump()
@@ -49,13 +49,13 @@ if __name__ == "__main__":
 
         paretos = []
         for idx, sample in enumerate(random_samples):
-            print(f"{idx}th conf of random sampling")
+            # print(f"{idx}th conf of random sampling")
             paretos += [mlp.get_pareto(sample)]
 
         adapt_paretos(paretos)
         save_paretos(paretos)
 
-    print(f"Optimization time: {time.time() - start_time}")
+    # print(f"Optimization time: {time.time() - start_time}")
 
     update_config(paretos)
 

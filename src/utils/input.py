@@ -22,15 +22,16 @@ def create_configuration(file_name: str):
     conf["objectives"] = [conf["performance_objective"], conf["use_case_objective"]]
     conf["obj_metrics"] = [c["metric"] for c in conf["objectives"]]
     conf["obj_modes"] = [c["mode"] for c in conf["objectives"]]
-    (
-        conf["X"],
-        conf["y"],
-        conf["categorical_indicator"],
-        conf["feature_names"],
-    ) = load_dataset_from_openml(conf["dataset"])
-    if "sensitive_feature" in conf["use_case_objective"]:
-        conf["use_case_objective"]["sensitive_feature_idx"] = conf[
-            "feature_names"
-        ].index(conf["use_case_objective"]["sensitive_feature"])
+    if conf["model"] != "lcbench":
+        (
+            conf["X"],
+            conf["y"],
+            conf["categorical_indicator"],
+            conf["feature_names"],
+        ) = load_dataset_from_openml(conf["dataset"])
+        if "sensitive_feature" in conf["use_case_objective"]:
+            conf["use_case_objective"]["sensitive_feature_idx"] = conf[
+                "feature_names"
+            ].index(conf["use_case_objective"]["sensitive_feature"])
 
     ConfDict(conf)
