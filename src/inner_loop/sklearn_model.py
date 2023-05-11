@@ -3,6 +3,15 @@ from __future__ import annotations
 
 import numpy as np
 
+
+from ConfigSpace import (
+    Categorical,
+    Configuration,
+    ConfigurationSpace,
+    Float,
+    Integer,
+)
+
 import sklearn
 
 from sklearn.pipeline import Pipeline
@@ -12,12 +21,13 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler, MinMaxScaler
 
 # from sklearn.model_selection import StratifiedKFold, cross_validate
 from sklearn.neural_network import MLPClassifier
+from inner_loop.exec_model import ExecModel
 
 
 from utils.input import ConfDict
 
 
-class SklearnModel:
+class SklearnModel(ExecModel):
     def build_model(self, config, budget):
         numeric_transformer = Pipeline(
             steps=[

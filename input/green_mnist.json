@@ -1,0 +1,18 @@
+{
+    "dataset": "optdigits",
+    "use_case": "green_automl",
+    "performance_objective": {
+        "metric": "accuracy_score",
+        "mode": "max"
+    },
+    "use_case_objective": {
+        "metric": "carbon emissions",
+        "mode": "min"
+    },
+    "time_budget": 30,
+    "iterations": 200,
+    "grid_samples": 10,
+    "random_samples": 20,
+    "output_folder": "green_mnist_epochs",
+    "seed": 0
+}

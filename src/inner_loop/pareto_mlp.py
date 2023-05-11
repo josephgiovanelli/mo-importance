@@ -34,7 +34,7 @@ class ParetoMLP(MLP):
     def __init__(self, implementation="sklearn"):
         super().__init__(implementation)
         self.p_star = super().configspace.get_hyperparameter(
-            "alpha" if ConfDict()["use_case"] == "fairness" else "n_epochs"
+            "alpha" if ConfDict()["use_case"] == "fairness" else "num_layers"
         )
 
     @property

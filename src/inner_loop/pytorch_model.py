@@ -3,18 +3,28 @@ from __future__ import annotations
 
 import numpy as np
 
+
+from ConfigSpace import (
+    Categorical,
+    Configuration,
+    ConfigurationSpace,
+    Float,
+    Integer,
+)
+
 import torch
 import torch.nn as nn
 from collections import OrderedDict
 
 # from sklearn.model_selection import StratifiedKFold, cross_validate
 from sklearn.preprocessing import MinMaxScaler
+from inner_loop.exec_model import ExecModel
 
 
 from utils.input import ConfDict
 
 
-class PytorchModel:
+class PytorchModel(ExecModel):
     def __init__(self) -> None:
         torch.manual_seed(ConfDict()["seed"])
 
