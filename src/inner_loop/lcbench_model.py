@@ -77,10 +77,10 @@ class LCBenchModel:
                 )
 
             performance_dict = {
-                f"""{ConfDict()["performance_objective"]["metric"]}""": results_list[0][
-                    "val_accuracy"
-                ]
-                / 100
+                f"""{ConfDict()["performance_objective"]["metric"]}""": adapt_to_mode(
+                    results_list[0]["val_accuracy"] / 100,
+                    ConfDict()["performance_objective"]["mode"],
+                )
             }
 
             return {**performance_dict, **use_case_dict}
