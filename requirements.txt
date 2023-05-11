@@ -8,3 +8,7 @@ openml
 codecarbon
 fairlearn
 torch
+pickle-mixin
+gzip-reader
+setuptools
+nats_bench
