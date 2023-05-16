@@ -41,13 +41,22 @@ def update_config(paretos):
                 )
 
 
-def save_paretos(paretos):
-    with open(os.path.join(ConfDict()["output_folder"], "dump.json"), "w") as f:
+def save_paretos(paretos, file_name):
+    with open(os.path.join(ConfDict()["output_folder"], f"{file_name}.json"), "w") as f:
         json.dump({idx: pareto for idx, pareto in enumerate(paretos)}, f)
 
 
 def check_dump():
     return os.path.isfile(os.path.join(ConfDict()["output_folder"], "dump.json"))
+
+
+def check_pictures():
+    return all(
+        [
+            os.path.isfile(os.path.join(ConfDict()["output_folder"], f"{idx}.png"))
+            for idx in range(ConfDict()["random_samples"])
+        ]
+    )
 
 
 def load_dump():

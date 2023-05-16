@@ -14,11 +14,16 @@ from inner_loop.pareto_mlp import ParetoMLP
 
 from utils.argparse import parse_args
 from utils.dataset import load_dataset_from_openml
-from utils.plot import plot_pareto_from_history
+from utils.pareto import (
+    encode_pareto,
+    get_pareto_from_history,
+    plot_pareto_from_history,
+)
 from utils.sample import grid_search, random_search
 from utils.input import ConfDict, create_configuration
 from utils.output import (
     adapt_paretos,
+    check_pictures,
     save_paretos,
     check_dump,
     load_dump,
@@ -53,17 +58,20 @@ if __name__ == "__main__":
             paretos += [mlp.get_pareto(sample)]
 
         adapt_paretos(paretos)
-        save_paretos(paretos)
+        save_paretos(paretos, "dump")
 
     # print(f"Optimization time: {time.time() - start_time}")
 
     update_config(paretos)
 
-    for idx, history in enumerate(paretos):
-        plot_pareto_from_history(
-            history,
-            os.path.join(ConfDict()["output_folder"], str(idx)),
-        )
+    if check_pictures():
+        save_paretos(encode_pareto(paretos), "encoded")
+    else:
+        for idx, history in enumerate(paretos):
+            plot_pareto_from_history(
+                history,
+                os.path.join(ConfDict()["output_folder"], str(idx)),
+            )
 
     # # Define our environment variables
     # scenario = Scenario(

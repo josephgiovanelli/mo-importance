@@ -3,13 +3,14 @@ import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 from ConfigSpace import Configuration
 
 from smac.facade.abstract_facade import AbstractFacade
 
 from utils.input import ConfDict
-from utils.output import adapt_to_mode
+from utils.output import adapt_to_mode, save_paretos
 
 
 __copyright__ = "Copyright 2021, AutoML.org Freiburg-Hannover"
@@ -62,6 +63,22 @@ def get_pareto_from_history(history: list[dict]):
     # pareto_configs = [configs[i] for i in get_pareto_indeces(costs)]
 
     return {"costs": costs, "pareto_costs": pareto_costs}
+
+
+def encode_pareto(paretos):
+    encoded_paretos = []
+    for history in paretos:
+        pareto_dict = get_pareto_from_history(history)
+        pareto_list = [
+            elem
+            if np.any(np.all(elem == pareto_dict["pareto_costs"], axis=1))
+            else np.nan * np.ones(elem.shape)
+            for elem in pareto_dict["costs"]
+        ]
+        encoded_paretos.append(
+            pd.DataFrame(pareto_list).ffill().bfill().values.tolist()
+        )
+    return encoded_paretos
 
 
 def get_pareto_from_smac(smac: AbstractFacade, incumbents: list[Configuration]) -> None:
