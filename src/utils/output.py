@@ -3,6 +3,7 @@ import os
 from utils.input import ConfDict
 
 import numpy as np
+import pandas as pd
 
 import json
 
@@ -46,8 +47,22 @@ def save_paretos(paretos, file_name):
         json.dump({idx: pareto for idx, pareto in enumerate(paretos)}, f)
 
 
+def save_preferences(preferences):
+    preferences.to_csv(
+        os.path.join(ConfDict()["output_folder"], "preferences.csv"), index=False
+    )
+
+
 def check_dump():
     return os.path.isfile(os.path.join(ConfDict()["output_folder"], "dump.json"))
+
+
+def check_encoded():
+    return os.path.isfile(os.path.join(ConfDict()["output_folder"], "encoded.json"))
+
+
+def check_preferences():
+    return os.path.isfile(os.path.join(ConfDict()["output_folder"], "preferences.csv"))
 
 
 def check_pictures():
@@ -63,3 +78,13 @@ def load_dump():
     with open(os.path.join(ConfDict()["output_folder"], "dump.json")) as file:
         dump = json.load(file)
     return dump.values()
+
+
+def load_encoded():
+    with open(os.path.join(ConfDict()["output_folder"], "encoded.json")) as file:
+        encoded = json.load(file)
+    return encoded
+
+
+def load_preferences():
+    return pd.read_csv(os.path.join(ConfDict()["output_folder"], "preferences.csv"))
