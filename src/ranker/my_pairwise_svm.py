@@ -1,13 +1,21 @@
 import logging
 
 import numpy as np
+
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import LinearSVC
+from sklearn.svm import SVC, LinearSVC
 from sklearn.decomposition import PCA
 from sklearn.utils import check_random_state
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.feature_selection import SelectKBest
+
 
 from csrank.learner import Learner
+
+from utils.common import check_for_bool
+from utils.input import ConfDict
 
 logger = logging.getLogger(__name__)
 
@@ -17,9 +25,13 @@ class MyPairwiseSVM(Learner):
         self,
         C=1.0,
         tol=1e-4,
+        dual=False,
+        loss="squared_hinge",
+        penalty="l1",
         normalize=True,
         fit_intercept=True,
-        use_logistic_regression=False,
+        svm_implementation="linear",
+        features_implementation="selection",
         n_features=None,
         random_state=None,
         **kwargs,
@@ -49,17 +61,78 @@ class MyPairwiseSVM(Learner):
         ----------
             [1] Joachims, T. (2002, July). "Optimizing search engines using clickthrough data.", Proceedings of the eighth ACM SIGKDD international conference on Knowledge discovery and data mining (pp. 133-142). ACM.
         """
+        self.C = float(C)
+        self.tol = float(tol)
+        self.dual = check_for_bool(dual)
+        self.loss = loss
+        self.penalty = penalty
         self.normalize = normalize
-        self.C = C
-        self.tol = tol
-        self.use_logistic_regression = use_logistic_regression
-        self.random_state = random_state
         self.fit_intercept = fit_intercept
+        self.svm_implementation = svm_implementation
+        self.features_implementation = features_implementation
         self.n_features = n_features
+        self.random_state = random_state
 
     def _pre_fit(self):
         super()._pre_fit()
         self.random_state_ = check_random_state(self.random_state)
+
+    def _build_pipeline(self):
+        if self.svm_implementation == "logistic":
+            self.model_ = LogisticRegression(
+                C=self.C,
+                tol=self.tol,
+                dual=self.dual,
+                penalty=self.penalty,
+                fit_intercept=self.fit_intercept,
+                random_state=self.random_state_,
+            )
+            logger.info("Logistic Regression model ")
+        elif self.svm_implementation == "linear":
+            self.model_ = LinearSVC(
+                C=self.C,
+                tol=self.tol,
+                dual=self.dual,
+                loss=self.loss,
+                penalty=self.penalty,
+                fit_intercept=self.fit_intercept,
+                random_state=self.random_state_,
+            )
+            logger.info("Linear SVC model ")
+        # elif self.implementation == "kernel":
+        #     self.model_ = SVC(
+        #         C=self.C,
+        #         kernel=self.kernel,
+        #         degree=self.degree,
+        #         gamma=self.gamma,
+        #         coef0=self.coef0,
+        #         shrinking=self.shrinking,
+        #         tol=self.tol,
+        #         class_weight=self.class_weight,
+        #         max_iter=self.max_iter,
+        #         random_state=self.random_state,
+        #         decision_function_shape="ovr",
+        #         random_state=self.random_state_,
+        #     )
+        else:
+            raise Exception("Invalid SVM implementation")
+
+        self.scaler_ = StandardScaler() if self.normalize else FunctionTransformer()
+
+        if self.features_implementation == "selection":
+            self.features_ = SelectKBest(k=self.n_features)
+        elif self.features_implementation == "pca":
+            self.features_ = PCA(n_components=self.n_features)
+        else:
+            self.features_ = FunctionTransformer()
+
+        return Pipeline(
+            [
+                ("scaler", self.scaler_),
+                ("features", self.features_),
+                ("model", self.model_),
+            ]
+        )
 
     def fit(self, X, Y, **kwargs):
         """
@@ -76,51 +149,37 @@ class MyPairwiseSVM(Learner):
             Keyword arguments for the fit function
 
         """
+
         self._pre_fit()
         _n_instances, self.n_objects_fit_, self.n_object_features_fit_ = X.shape
-        if self.use_logistic_regression:
-            self.model_ = LogisticRegression(
-                C=self.C,
-                tol=self.tol,
-                fit_intercept=self.fit_intercept,
-                random_state=self.random_state_,
-            )
-            logger.info("Logistic Regression model ")
-        else:
-            self.model_ = LinearSVC(
-                C=self.C,
-                tol=self.tol,
-                fit_intercept=self.fit_intercept,
-                random_state=self.random_state_,
-            )
-            logger.info("Linear SVC model ")
 
         if self.n_objects_fit_ < 2:
             # Nothing to learn, cannot create pairwise instances.
             return self
+
         x_train, y_single = self._convert_instances_(X, Y)
-        if self.normalize:
-            self.std_scalar = StandardScaler()
-            x_train = self.std_scalar.fit_transform(x_train)
-        if self.n_features:
-            self.pca = PCA(n_components=self.n_features)
-            x_train = self.pca.fit_transform(x_train)
+
         logger.debug("Finished Creating the model, now fitting started")
 
-        self.model_.fit(x_train, y_single)
+        pipeline = self._build_pipeline()
+
+        pipeline.fit(x_train, y_single)
         self.weights_ = self.model_.coef_.flatten()
         if self.fit_intercept:
             self.weights_ = np.append(self.weights_, self.model_.intercept_)
         logger.debug("Fitting Complete")
+
         return self
 
     def _predict_scores_fixed(self, X, **kwargs):
         assert X.shape[-1] == self.n_object_features_fit_
         logger.info("For Test instances {} objects {} features {}".format(*X.shape))
         # if self.normalize:
-        #     x_test = np.array([self.std_scalar.transform(elem) for elem in X])
-        if self.n_features:
-            x_test = np.array([self.pca.transform(elem) for elem in X])
+        #     x_test = np.array([self.scaler_.transform(elem) for elem in X])
+        if self.features_implementation != "none":
+            x_test = np.array([self.features_.transform(elem) for elem in X])
+        else:
+            x_test = X
         if self.fit_intercept:
             scores = np.dot(x_test, self.weights_[:-1])
         else:
