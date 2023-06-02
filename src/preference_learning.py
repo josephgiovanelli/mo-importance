@@ -1,4 +1,5 @@
 from collections import ChainMap
+import json
 import random
 import warnings
 import logging
@@ -299,6 +300,12 @@ if __name__ == "__main__":
                 os.path.join(ConfDict()["output_folder"], "preference_summary.csv"),
                 index=False,
             )
+
+            with open(
+                os.path.join(ConfDict()["output_folder"], "preference_incumbent.json"),
+                "w",
+            ) as f:
+                json.dump(incumbent.get_dictionary(), f)
 
 
 # %%

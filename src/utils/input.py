@@ -12,11 +12,13 @@ class ConfDict(dict):
         return cls.instance
 
 
-def create_configuration(file_name: str):
+def create_configuration(file_name: str, origin: str = "preliminar_sampling"):
     with open(os.path.join("/", "home", "input", file_name)) as file:
         conf = json.load(file)
 
-    conf["output_folder"] = os.path.join("/", "home", "output", conf["output_folder"])
+    conf["output_folder"] = os.path.join(
+        "/", "home", "output", origin, conf["output_folder"]
+    )
     make_dir(conf["output_folder"])
 
     conf["objectives"] = [conf["performance_objective"], conf["use_case_objective"]]

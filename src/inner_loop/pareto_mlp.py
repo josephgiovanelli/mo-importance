@@ -64,7 +64,7 @@ class ParetoMLP(MLP):
                 temp_config[k] = v
         return temp_config
 
-    def get_pareto(
+    def train(
         self,
         random_config: Configuration,
         seed: int = 0,
@@ -99,7 +99,7 @@ class ParetoMLP(MLP):
                             "config": self.__union_configs(
                                 random_config, grid_config
                             ).get_dictionary(),
-                            "evaluation": self.train(
+                            "evaluation": super().train(
                                 self.__union_configs(random_config, grid_config),
                                 seed,
                                 budget,
