@@ -51,7 +51,8 @@ from utils.output import (
 
 
 def configspace() -> ConfigurationSpace:
-    C = UniformFloatHyperparameter("C", 0.03125, 32768, log=True, default_value=1.0)
+    # C = UniformFloatHyperparameter("C", 0.03125, 32768, log=True, default_value=1.0)
+    C = UniformFloatHyperparameter("C", 0.8, 1.5, log=False, default_value=1.0)
     tol = UniformFloatHyperparameter("tol", 1e-5, 1e-1, default_value=1e-3, log=True)
     dual = CategoricalHyperparameter("dual", ["True", "False"], default_value="False")
     loss = CategoricalHyperparameter(
@@ -59,20 +60,19 @@ def configspace() -> ConfigurationSpace:
     )
     penalty = CategoricalHyperparameter("penalty", ["l1", "l2"], default_value="l1")
 
-    n_features = UniformIntegerHyperparameter(
-        "n_features", 1, 19, default_value=19, log=False
-    )
-
-    svm_implementation = CategoricalHyperparameter(
-        "svm_implementation",
-        ["logistic", "linear"],
-        default_value="linear",
-    )
-    features_implementation = CategoricalHyperparameter(
-        "features_implementation",
-        ["selection", "pca", "none"],
-        default_value="none",
-    )
+    # n_features = UniformIntegerHyperparameter(
+    #     "n_features", 1, 19, default_value=19, log=False
+    # )
+    # svm_implementation = CategoricalHyperparameter(
+    #     "svm_implementation",
+    #     ["logistic", "linear"],
+    #     default_value="linear",
+    # )
+    # features_implementation = CategoricalHyperparameter(
+    #     "features_implementation",
+    #     ["selection", "pca", "none"],
+    #     default_value="none",
+    # )
     normalize = CategoricalHyperparameter(
         "normalize", ["True", "False"], default_value="False"
     )
@@ -85,23 +85,23 @@ def configspace() -> ConfigurationSpace:
             dual,
             loss,
             penalty,
-            n_features,
-            svm_implementation,
-            features_implementation,
+            # n_features,
+            # svm_implementation,
+            # features_implementation,
             normalize,
         ]
     )
 
-    loss_condition = EqualsCondition(loss, svm_implementation, "linear")
-    dual_condition = EqualsCondition(dual, svm_implementation, "linear")
-    svm_implementation_condition = EqualsCondition(svm_implementation, penalty, "l2")
-    n_features_condition = InCondition(
-        n_features, features_implementation, ["selection", "pca"]
-    )
-    cs.add_condition(dual_condition)
-    cs.add_condition(loss_condition)
-    cs.add_condition(svm_implementation_condition)
-    cs.add_condition(n_features_condition)
+    # loss_condition = EqualsCondition(loss, svm_implementation, "linear")
+    # dual_condition = EqualsCondition(dual, svm_implementation, "linear")
+    # svm_implementation_condition = EqualsCondition(svm_implementation, penalty, "l2")
+    # n_features_condition = InCondition(
+    #     n_features, features_implementation, ["selection", "pca"]
+    # )
+    # cs.add_condition(dual_condition)
+    # cs.add_condition(loss_condition)
+    # cs.add_condition(svm_implementation_condition)
+    # cs.add_condition(n_features_condition)
     return cs
 
 

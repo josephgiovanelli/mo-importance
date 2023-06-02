@@ -15,5 +15,7 @@ if __name__ == "__main__":
     confs = [p for p in os.listdir(input_path) if ".json" in p]
     with tqdm(total=len(confs)) as pbar:
         for conf in confs:
-            subprocess.call(f"python src/main.py --conf_file {conf}", shell=True)
+            subprocess.call(
+                f"python src/preliminar_sampling.py --conf_file {conf}", shell=True
+            )
             pbar.update()
