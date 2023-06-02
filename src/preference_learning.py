@@ -73,6 +73,9 @@ def configspace() -> ConfigurationSpace:
         ["selection", "pca", "none"],
         default_value="none",
     )
+    normalize = CategoricalHyperparameter(
+        "normalize", ["True", "False"], default_value="False"
+    )
 
     cs = ConfigurationSpace()
     cs.add_hyperparameters(
@@ -85,6 +88,7 @@ def configspace() -> ConfigurationSpace:
             n_features,
             svm_implementation,
             features_implementation,
+            normalize,
         ]
     )
 
@@ -101,7 +105,7 @@ def configspace() -> ConfigurationSpace:
     return cs
 
 
-def compute_raw_results(config_dict, result_dict, mode, seed):
+def compute_raw_results(config_dict, result_dict, feat_dict, mode, seed):
     if mode == "cross_validation":
         splits = KFold(n_splits=10, random_state=seed).split(ConfDict()["X"])
     else:
@@ -142,12 +146,13 @@ def compute_raw_results(config_dict, result_dict, mode, seed):
             )
         )
 
-    result_dict[f"{mode}"] = np.mean(
+    feat_dict[mode] = fate.features_expl_
+    result_dict[mode] = np.mean(
         [accuracy_score(result["y_true"], result["y_pred"]) for result in raw_results]
     )
     pd.concat(raw_results, ignore_index=True).to_csv(
         os.path.join(
-            make_dir(os.path.join("temp_500_new", f"{mode}")),
+            make_dir(os.path.join(ConfDict()["output_folder"], f"{mode}")),
             f"""predictions_{ConfDict()["iteration"]}.csv""",
         ),
         index=False,
@@ -161,11 +166,15 @@ def objective(config: Configuration, seed: int = 0) -> float:
         "cross_validation": np.nan,
         "train_test": np.nan,
     }
+    feat_dict = {
+        "cross_validation": "",
+        "train_test": "",
+    }
 
     try:
         for mode in result_dict.keys():
             if mode != "iteration":
-                compute_raw_results(config_dict, result_dict, mode, seed)
+                compute_raw_results(config_dict, result_dict, feat_dict, mode, seed)
 
         log = "success"
     except Exception as e:
@@ -180,6 +189,10 @@ def objective(config: Configuration, seed: int = 0) -> float:
                         {
                             **{key: [value] for key, value in result_dict.items()},
                             **{key: [value] for key, value in config_dict.items()},
+                            **{
+                                f"feat_{key}": [value]
+                                for key, value in feat_dict.items()
+                            },
                             **{"log": [log]},
                         }
                     ),
@@ -204,7 +217,6 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.CRITICAL)
     logging.getLogger().setLevel(logging.CRITICAL)
 
-    make_dir("temp_500_new")
     if check_preferences():
         flatten_encoded = {
             key: np.array(value).flatten() for key, value in load_encoded().items()
@@ -254,7 +266,9 @@ if __name__ == "__main__":
             # Next, we create an object, holding general information about the run
             scenario = Scenario(
                 configspace(),
-                n_trials=500,  # We want to run max 50 trials (combination of config and seed)
+                n_trials=ConfDict()[
+                    "preference_samples"
+                ],  # We want to run max 50 trials (combination of config and seed)
             )
 
             # We want to run the facade's default initial design, but we want to change the number
@@ -282,7 +296,8 @@ if __name__ == "__main__":
             print(f"Incumbent cost: {incumbent_cost}")
 
             ConfDict()["summary"].to_csv(
-                os.path.join("temp_500_new", "summary.csv"), index=False
+                os.path.join(ConfDict()["output_folder"], "preference_summary.csv"),
+                index=False,
             )
 
 

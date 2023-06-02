@@ -28,10 +28,10 @@ class MyPairwiseSVM(Learner):
         dual=False,
         loss="squared_hinge",
         penalty="l1",
-        normalize=True,
+        normalize=False,
         fit_intercept=True,
         svm_implementation="linear",
-        features_implementation="selection",
+        features_implementation="none",
         n_features=None,
         random_state=None,
         **kwargs,
@@ -66,7 +66,7 @@ class MyPairwiseSVM(Learner):
         self.dual = check_for_bool(dual)
         self.loss = loss
         self.penalty = penalty
-        self.normalize = normalize
+        self.normalize = check_for_bool(normalize)
         self.fit_intercept = fit_intercept
         self.svm_implementation = svm_implementation
         self.features_implementation = features_implementation
@@ -117,7 +117,7 @@ class MyPairwiseSVM(Learner):
         else:
             raise Exception("Invalid SVM implementation")
 
-        self.scaler_ = StandardScaler() if self.normalize else FunctionTransformer()
+        self.scaler_ = StandardScaler()
 
         if self.features_implementation == "selection":
             self.features_ = SelectKBest(k=self.n_features)
@@ -161,9 +161,15 @@ class MyPairwiseSVM(Learner):
 
         logger.debug("Finished Creating the model, now fitting started")
 
-        pipeline = self._build_pipeline()
+        self.pipeline_ = self._build_pipeline()
 
-        pipeline.fit(x_train, y_single)
+        self.pipeline_.fit(x_train, y_single)
+        if self.features_implementation == "selection":
+            self.features_expl_ = str(self.features_.scores_)
+        # elif self.features_implementation == "pca":
+        #     self.features_expl_ = str(self.features_.components_)
+        else:
+            self.features_expl_ = ""
         self.weights_ = self.model_.coef_.flatten()
         if self.fit_intercept:
             self.weights_ = np.append(self.weights_, self.model_.intercept_)
@@ -174,17 +180,22 @@ class MyPairwiseSVM(Learner):
     def _predict_scores_fixed(self, X, **kwargs):
         assert X.shape[-1] == self.n_object_features_fit_
         logger.info("For Test instances {} objects {} features {}".format(*X.shape))
-        # if self.normalize:
-        #     x_test = np.array([self.scaler_.transform(elem) for elem in X])
+
+        x_test = X.copy()
+
+        if self.normalize:
+            x_test = np.array([self.scaler_.transform(elem) for elem in x_test])
+
         if self.features_implementation != "none":
-            x_test = np.array([self.features_.transform(elem) for elem in X])
-        else:
-            x_test = X
+            x_test = np.array([self.features_.transform(elem) for elem in x_test])
+
         if self.fit_intercept:
             scores = np.dot(x_test, self.weights_[:-1])
         else:
             scores = np.dot(x_test, self.weights_)
+
         logger.info("Done predicting scores")
+
         return np.array(scores)
 
     def _convert_instances_(self, X, Y):

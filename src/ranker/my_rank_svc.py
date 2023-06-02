@@ -20,7 +20,7 @@ class MyRankSVM(ObjectRanker, MyPairwiseSVM):
         dual=False,
         loss="squared_hinge",
         penalty="l1",
-        normalize=True,
+        normalize=False,
         fit_intercept=True,
         svm_implementation="linear",
         features_implementation="none",
