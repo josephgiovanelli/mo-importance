@@ -9,14 +9,13 @@ import numpy as np
 from smac import HyperparameterOptimizationFacade as HPOFacade
 from smac import Scenario
 from smac.model.random_model import RandomModel
+from inner_loop.mlp import MLP
 
 from inner_loop.pareto_mlp import ParetoMLP
 from inner_loop.preference_pareto_mlp import PreferenceParetoMLP
 
 from utils.argparse import parse_args
-from utils.common import make_dir
 from utils.dataset import load_dataset_from_openml
-from utils.optimization import multi_objective, preference_learning
 from utils.pareto import (
     encode_pareto,
     get_pareto_from_history,
@@ -48,31 +47,9 @@ if __name__ == "__main__":
     random.seed(ConfDict()["seed"])
     np.random.seed(ConfDict()["seed"])
 
-    preference_learning()
-    smac, incumbents = multi_objective()
+    # start_time = time.time()
 
+    # Let's plot a pareto front
     plot_pareto_from_smac(
-        smac,
-        incumbents,
-        os.path.join(
-            make_dir(os.path.join(ConfDict()["output_folder"], "multi_objective")),
-            "best",
-        ),
+        smac, incumbents, os.path.join(ConfDict()["output_folder"], "best")
     )
-
-    if check_pictures():
-        save_paretos(encode_pareto(ConfDict()["paretos"]), "encoded")
-    else:
-        for idx, history in enumerate(ConfDict()["paretos"]):
-            plot_pareto_from_history(
-                history,
-                os.path.join(
-                    make_dir(
-                        os.path.join(ConfDict()["output_folder"], "preference_learning")
-                    ),
-                    str(idx),
-                ),
-            )
-
-
-# %%

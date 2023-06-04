@@ -89,6 +89,17 @@ def get_pareto_from_smac(smac: AbstractFacade, incumbents: list[Configuration]) 
         # Since we use multiple seeds, we have to average them to get only one cost value pair for each configuration
         average_cost = smac.runhistory.average_cost(config)
 
+        for obj_idx in range(len(ConfDict()["objectives"])):
+            average_cost[obj_idx] = adapt_to_mode(
+                average_cost[obj_idx],
+                ConfDict()["obj_modes"][obj_idx],
+            )
+
+            if average_cost[obj_idx] < ConfDict()["objectives"][obj_idx]["lower_bound"]:
+                ConfDict()["objectives"][obj_idx]["lower_bound"] = average_cost[obj_idx]
+            if average_cost[obj_idx] > ConfDict()["objectives"][obj_idx]["upper_bound"]:
+                ConfDict()["objectives"][obj_idx]["upper_bound"] = average_cost[obj_idx]
+
         if config in incumbents:
             pareto_costs += [average_cost]
         else:
@@ -150,5 +161,14 @@ def plot_pareto(summary, output_path):
 def plot_pareto_from_history(history: list[dict], output_path):
     plot_pareto(
         get_pareto_from_history(history),
+        output_path,
+    )
+
+
+def plot_pareto_from_smac(
+    smac: AbstractFacade, incumbents: list[Configuration], output_path
+):
+    plot_pareto(
+        get_pareto_from_smac(smac, incumbents),
         output_path,
     )
