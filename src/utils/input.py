@@ -17,7 +17,11 @@ def create_configuration(file_name: str, origin: str = "preliminar_sampling"):
         conf = json.load(file)
 
     conf["output_folder"] = os.path.join(
-        "/", "home", "output", origin, conf["output_folder"]
+        "/",
+        "home",
+        "output",
+        conf["output_folder"],
+        origin,
     )
     make_dir(conf["output_folder"])
 

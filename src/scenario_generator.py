@@ -13,7 +13,7 @@ template = {
     "model": "lcbench",
     "use_case": "green_automl",
     "performance_objective": {"metric": "Accuracy", "mode": "max"},
-    "use_case_objective": {"metric": "power consumption (W)", "mode": "min"},
+    "use_case_objective": {"metric": "Power consumption (W)", "mode": "min"},
     "grid_samples": 10,
     "random_samples": 20,
     "preference_samples": 1000,

@@ -47,7 +47,7 @@ if __name__ == "__main__":
     # start_time = time.time()
 
     if check_dump():
-        paretos = load_dump()
+        ConfDict({"paretos": load_dump()})
     else:
         mlp = PreferenceParetoMLP("lcbench")
         # grid_samples = grid_search(configspace=mlp.configspace, num_steps=2)
@@ -56,12 +56,14 @@ if __name__ == "__main__":
         )
 
         ConfDict({"paretos": []})
+        ConfDict({"scores": []})
+        scores = []
         for idx, sample in enumerate(random_samples):
             # print(f"{idx}th conf of random sampling")
-            mlp.train(sample)
+            scores += [mlp.train(sample)]
 
-        adapt_paretos(ConfDict()["paretos"])
         save_paretos(ConfDict()["paretos"], "dump")
+        save_paretos(np.array(ConfDict()["scores"]).flatten(), "scores")
 
     # print(f"Optimization time: {time.time() - start_time}")
 
@@ -75,6 +77,8 @@ if __name__ == "__main__":
                 history,
                 os.path.join(ConfDict()["output_folder"], str(idx)),
             )
+
+    print(list(enumerate(scores)))
 
     # # Define our environment variables
     # scenario = Scenario(

@@ -33,13 +33,13 @@ if __name__ == "__main__":
 
     random.seed(ConfDict()["seed"])
 
-    encoded = load_encoded()
+    encoded = load_encoded(ConfDict()["output_folder"])
     combinations = rSubset(encoded.keys(), 2)
     tot = len(combinations)
     random.shuffle(combinations)
 
-    if check_preferences():
-        preferences = load_preferences()
+    if check_preferences(ConfDict()["output_folder"]):
+        preferences = load_preferences(ConfDict()["output_folder"])
         combinations = combinations[
             (
                 combinations.index(

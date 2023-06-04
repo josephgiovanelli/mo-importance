@@ -61,8 +61,8 @@ def check_encoded():
     return os.path.isfile(os.path.join(ConfDict()["output_folder"], "encoded.json"))
 
 
-def check_preferences():
-    return os.path.isfile(os.path.join(ConfDict()["output_folder"], "preferences.csv"))
+def check_preferences(preference_path):
+    return os.path.isfile(preference_path)
 
 
 def check_pictures():
@@ -74,17 +74,21 @@ def check_pictures():
     )
 
 
+def load_json_file(file_path):
+    with open(file_path) as file:
+        json_file = json.load(file)
+    return json_file
+
+
 def load_dump():
-    with open(os.path.join(ConfDict()["output_folder"], "dump.json")) as file:
-        dump = json.load(file)
-    return dump.values()
+    return load_json_file(
+        os.path.join(ConfDict()["output_folder"], "dump.json")
+    ).values()
 
 
-def load_encoded():
-    with open(os.path.join(ConfDict()["output_folder"], "encoded.json")) as file:
-        encoded = json.load(file)
-    return encoded
+def load_encoded(path):
+    return load_json_file(os.path.join(path, "encoded.json"))
 
 
-def load_preferences():
-    return pd.read_csv(os.path.join(ConfDict()["output_folder"], "preferences.csv"))
+def load_preferences(path):
+    return pd.read_csv(os.path.join(path, "preferences.csv"))

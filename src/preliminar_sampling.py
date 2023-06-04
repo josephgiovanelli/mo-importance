@@ -55,7 +55,7 @@ if __name__ == "__main__":
         paretos = []
         for idx, sample in enumerate(random_samples):
             # print(f"{idx}th conf of random sampling")
-            paretos += [mlp.get_pareto(sample)]
+            paretos += [mlp.train(sample)]
 
         adapt_paretos(paretos)
         save_paretos(paretos, "dump")
@@ -64,13 +64,13 @@ if __name__ == "__main__":
 
     update_config(paretos)
 
-    if check_pictures():
-        save_paretos(encode_pareto(paretos), "encoded")
-    else:
+    if not check_pictures():
         for idx, history in enumerate(paretos):
             plot_pareto_from_history(
                 history,
                 os.path.join(ConfDict()["output_folder"], str(idx)),
             )
+
+    save_paretos(encode_pareto(paretos), "encoded")
 
 # %%
