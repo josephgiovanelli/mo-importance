@@ -58,7 +58,7 @@ if __name__ == "__main__":
             paretos += [mlp.train(sample)]
 
         adapt_paretos(paretos)
-        save_paretos(paretos, "dump")
+        save_paretos(paretos, ConfDict()["output_folder"], "dump")
 
     # print(f"Optimization time: {time.time() - start_time}")
 

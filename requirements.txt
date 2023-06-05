@@ -8,3 +8,4 @@ openml
 codecarbon
 fairlearn
 torch
+pymoo

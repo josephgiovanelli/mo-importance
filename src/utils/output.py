@@ -42,8 +42,8 @@ def update_config(paretos):
                 )
 
 
-def save_paretos(paretos, file_name):
-    with open(os.path.join(ConfDict()["output_folder"], f"{file_name}.json"), "w") as f:
+def save_paretos(paretos, path, file_name):
+    with open(os.path.join(path, f"{file_name}.json"), "w") as f:
         json.dump({idx: pareto for idx, pareto in enumerate(paretos)}, f)
 
 

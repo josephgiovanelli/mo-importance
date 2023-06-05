@@ -8,12 +8,14 @@ import numpy as np
 from smac import HyperparameterOptimizationFacade as HPOFacade
 from smac import Scenario
 from smac.model.random_model import RandomModel
+from inner_loop.hyper_pareto_mlp import HyperParetoMLP
 from inner_loop.mlp import MLP
 
 from inner_loop.pareto_mlp import ParetoMLP
 from inner_loop.preference_pareto_mlp import PreferenceParetoMLP
 
 from utils.argparse import parse_args
+from utils.common import make_dir
 from utils.dataset import load_dataset_from_openml
 from utils.pareto import (
     encode_pareto,
@@ -69,14 +71,25 @@ def multi_objective():
     for incumbent in incumbents:
         cost = smac.validate(incumbent)
         print("---", cost)
-    return smac, incumbents
+
+    plot_pareto_from_smac(
+        smac,
+        incumbents,
+        os.path.join(
+            make_dir(os.path.join(ConfDict()["output_folder"], "multi_objective")),
+            "best",
+        ),
+    )
 
 
-def preference_learning():
+def single_objective(model: str):
     if check_dump():
         ConfDict({"paretos": load_dump()})
     else:
-        mlp = PreferenceParetoMLP("lcbench")
+        if model == "preference_learning":
+            mlp = PreferenceParetoMLP("lcbench")
+        else:
+            mlp = HyperParetoMLP("lcbench")
 
         ConfDict({"paretos": []})
         ConfDict({"scores": []})
@@ -113,9 +126,33 @@ def preference_learning():
         cost = smac.validate(incumbent)
         print("---", cost)
 
-        save_paretos(ConfDict()["paretos"], "dump")
-        save_paretos(np.array(ConfDict()["scores"]).flatten(), "scores")
+        save_paretos(
+            ConfDict()["paretos"],
+            make_dir(os.path.join(ConfDict()["output_folder"], model)),
+            "dump",
+        )
+        save_paretos(
+            np.array(ConfDict()["scores"]).flatten(),
+            make_dir(os.path.join(ConfDict()["output_folder"], model)),
+            "scores",
+        )
 
     # print(f"Optimization time: {time.time() - start_time}")
 
     update_config(ConfDict()["paretos"])
+
+    if check_pictures():
+        save_paretos(
+            encode_pareto(ConfDict()["paretos"]),
+            make_dir(os.path.join(ConfDict()["output_folder"], model)),
+            "encoded",
+        )
+    else:
+        for idx, history in enumerate(ConfDict()["paretos"]):
+            plot_pareto_from_history(
+                history,
+                os.path.join(
+                    make_dir(os.path.join(ConfDict()["output_folder"], model)),
+                    str(idx),
+                ),
+            )
