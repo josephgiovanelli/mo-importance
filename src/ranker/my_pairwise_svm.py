@@ -117,7 +117,7 @@ class MyPairwiseSVM(Learner):
         else:
             raise Exception("Invalid SVM implementation")
 
-        self.scaler_ = StandardScaler()
+        # self.scaler_ = StandardScaler()
 
         if self.features_implementation == "selection":
             self.features_ = SelectKBest(k=self.n_features)
@@ -128,7 +128,7 @@ class MyPairwiseSVM(Learner):
 
         return Pipeline(
             [
-                ("scaler", self.scaler_),
+                # ("scaler", self.scaler_),
                 ("features", self.features_),
                 ("model", self.model_),
             ]

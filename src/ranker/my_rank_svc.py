@@ -2,6 +2,8 @@ import logging
 
 import numpy as np
 
+from sklearn.preprocessing import StandardScaler
+
 from csrank.core.pairwise_svm import PairwiseSVM
 from csrank.objectranking.object_ranker import ObjectRanker
 from csrank.objectranking.util import generate_complete_pairwise_dataset
@@ -80,6 +82,19 @@ class MyRankSVM(ObjectRanker, MyPairwiseSVM):
 
     def _convert_instances_(self, X, Y):
         logger.debug("Creating the Dataset")
+        if self.normalize:
+            self.scaler_ = StandardScaler().fit(
+                np.unique(X.reshape(X.shape[0] * X.shape[1], X.shape[2]), axis=0)
+            )
+            X = np.array(
+                [
+                    [
+                        self.scaler_.transform([elem[0]]),
+                        self.scaler_.transform([elem[1]]),
+                    ]
+                    for elem in X
+                ]
+            ).reshape(X.shape)
         exp_dataset = [
             [
                 [X[idx][y] - X[idx][int(not (y))], 1],
