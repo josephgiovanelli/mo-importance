@@ -108,7 +108,7 @@ def get_pareto_from_smac(smac: AbstractFacade, incumbents: list[Configuration]) 
     return {"costs": costs, "pareto_costs": pareto_costs}
 
 
-def plot_pareto(summary, output_path):
+def plot_pareto(summary, output_path, title):
     # Let's work with a numpy array
     costs = np.vstack(summary["costs"])
     pareto_costs = np.vstack(summary["pareto_costs"])
@@ -152,23 +152,18 @@ def plot_pareto(summary, output_path):
         ]
     )
     ax.set_title(ConfDict()["task"])
+    ax.set_title(title)
     ax.set_xlabel(ConfDict()["obj_metrics"][0])
     ax.set_ylabel(ConfDict()["obj_metrics"][1])
     ax.legend()
     fig.savefig(output_path)
 
 
-def plot_pareto_from_history(history: list[dict], output_path):
-    plot_pareto(
-        get_pareto_from_history(history),
-        output_path,
-    )
+def plot_pareto_from_history(history: list[dict], output_path, title):
+    plot_pareto(get_pareto_from_history(history), output_path, title)
 
 
 def plot_pareto_from_smac(
-    smac: AbstractFacade, incumbents: list[Configuration], output_path
+    smac: AbstractFacade, incumbents: list[Configuration], output_path, title
 ):
-    plot_pareto(
-        get_pareto_from_smac(smac, incumbents),
-        output_path,
-    )
+    plot_pareto(get_pareto_from_smac(smac, incumbents), output_path, title)

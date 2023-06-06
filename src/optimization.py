@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
     single_objective("preference_learning")
     multi_objective()
-    single_objective("hypervolume")
+    single_objective("hyper_volume")
 
 
 # %%

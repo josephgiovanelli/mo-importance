@@ -42,7 +42,7 @@ def multi_objective():
     scenario = Scenario(
         mlp.configspace,
         objectives=ConfDict()["obj_metrics"],
-        n_trials=ConfDict()["optimization_samples"],
+        n_trials=ConfDict()["optimization_samples"] * ConfDict()["grid_samples"],
         seed=ConfDict()["seed"],
         n_workers=1,
     )
@@ -69,6 +69,7 @@ def multi_objective():
 
     print("Validated costs from the Pareto front (incumbents):")
     for incumbent in incumbents:
+        print("---", incumbent)
         cost = smac.validate(incumbent)
         print("---", cost)
 
@@ -79,6 +80,7 @@ def multi_objective():
             make_dir(os.path.join(ConfDict()["output_folder"], "multi_objective")),
             "best",
         ),
+        title=f"""Sample Multi-objective  w/ {ConfDict()["optimization_samples"]* ConfDict()["grid_samples"]} samples""",
     )
 
 
@@ -155,4 +157,5 @@ def single_objective(model: str):
                     make_dir(os.path.join(ConfDict()["output_folder"], model)),
                     str(idx),
                 ),
+                title=f"""{model.capitalize().replace("_", "-")} w/ {ConfDict()["optimization_samples"]} samples""",
             )
