@@ -1,4 +1,5 @@
 import os
+import random
 
 import numpy as np
 import pandas as pd
@@ -120,21 +121,16 @@ def configspace() -> ConfigurationSpace:
     return cs
 
 
-def compute_raw_results(config_dict, result_dict, feat_dict, mode, seed):
-    if mode == "cross_validation":
-        splits = KFold(n_splits=10, random_state=seed).split(ConfDict()["X"])
-    else:
-        splits = [
-            train_test_split(
-                range(ConfDict()["X"].shape[0]),
-                test_size=0.33,
-                random_state=seed,
-            )
-        ]
+def compute_raw_results(config_dict, result_dict, mode, seed):
+    splits = KFold(n_splits=5, random_state=ConfDict()["seed"]).split(ConfDict()["X"])
+
     raw_results = []
     for train, test in splits:
+        i = int(mode.split("_")[-1])
         fate = MyRankSVM(**config_dict, random_state=seed)
-        fate.fit(ConfDict()["X"][train].copy(), ConfDict()["Y"][train].copy())
+        random.seed(seed)
+        new_train = random.sample(list(train), 28 * i)
+        fate.fit(ConfDict()["X"][new_train].copy(), ConfDict()["Y"][new_train].copy())
 
         raw_results.append(
             pd.DataFrame(
@@ -161,7 +157,6 @@ def compute_raw_results(config_dict, result_dict, feat_dict, mode, seed):
             )
         )
 
-    feat_dict[mode] = fate.features_expl_
     result_dict[mode] = np.mean(
         [accuracy_score(result["y_true"], result["y_pred"]) for result in raw_results]
     )
@@ -178,18 +173,15 @@ def objective(config: Configuration, seed: int = 0) -> float:
     config_dict = config.get_dictionary()
     result_dict = {
         "iteration": ConfDict()["iteration"],
-        "cross_validation": np.nan,
-        "train_test": np.nan,
+        "cross_validation_1": np.nan,
+        "cross_validation_2": np.nan,
+        "cross_validation_3": np.nan,
+        "cross_validation_4": np.nan,
     }
-    feat_dict = {
-        "cross_validation": "",
-        "train_test": "",
-    }
-
     try:
         for mode in result_dict.keys():
             if mode != "iteration":
-                compute_raw_results(config_dict, result_dict, feat_dict, mode, seed)
+                compute_raw_results(config_dict, result_dict, mode, seed)
 
         log = "success"
     except Exception as e:
@@ -204,10 +196,6 @@ def objective(config: Configuration, seed: int = 0) -> float:
                         {
                             **{key: [value] for key, value in result_dict.items()},
                             **{key: [value] for key, value in config_dict.items()},
-                            **{
-                                f"feat_{key}": [value]
-                                for key, value in feat_dict.items()
-                            },
                             **{"log": [log]},
                         }
                     ),
@@ -219,4 +207,4 @@ def objective(config: Configuration, seed: int = 0) -> float:
 
     ConfDict({"iteration": ConfDict()["iteration"] + 1})
 
-    return 1 - result_dict["cross_validation"]
+    return 1 - result_dict["cross_validation_4"]

@@ -2,6 +2,7 @@ from __future__ import annotations
 import os
 
 import warnings
+import random
 
 import numpy as np
 
@@ -53,7 +54,9 @@ class PreferenceParetoMLP(ParetoMLP):
             self.preference_model_ = MyRankSVM(
                 **config_dict, random_state=ConfDict()["seed"]
             )
-            self.preference_model_.fit(X.copy(), y.copy())
+            random.seed(ConfDict()["seed"])
+            indeces = random.sample(range(len(y)), 28)
+            self.preference_model_.fit(X[indeces].copy(), y[indeces].copy())
         else:
             raise Exception("No preferences found")
 

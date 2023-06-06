@@ -69,8 +69,9 @@ if __name__ == "__main__":
             plot_pareto_from_history(
                 history,
                 os.path.join(ConfDict()["output_folder"], str(idx)),
+                title="7593",
             )
 
-    save_paretos(encode_pareto(paretos), "encoded")
+    save_paretos(encode_pareto(paretos), ConfDict()["output_folder"], "encoded")
 
 # %%

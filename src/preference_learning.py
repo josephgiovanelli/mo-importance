@@ -48,9 +48,9 @@ if __name__ == "__main__":
             # Next, we create an object, holding general information about the run
             scenario = Scenario(
                 configspace(),
-                n_trials=ConfDict()[
-                    "preference_samples"
-                ],  # We want to run max 50 trials (combination of config and seed)
+                n_trials=ConfDict()["preference_samples"],
+                seed=ConfDict()["seed"],
+                n_workers=1,
             )
 
             # We want to run the facade's default initial design, but we want to change the number
@@ -58,12 +58,16 @@ if __name__ == "__main__":
             initial_design = HyperparameterOptimizationFacade.get_initial_design(
                 scenario, n_configs=50
             )
+            intensifier = HyperparameterOptimizationFacade.get_intensifier(
+                scenario, max_config_calls=3
+            )
 
             # Now we use SMAC to find the best hyperparameters
             smac = HyperparameterOptimizationFacade(
                 scenario,
                 objective,
                 initial_design=initial_design,
+                intensifier=intensifier,
                 overwrite=True,  # If the run exists, we overwrite it; alternatively, we can continue from last state
             )
 
