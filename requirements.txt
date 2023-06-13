@@ -9,3 +9,4 @@ codecarbon
 fairlearn
 torch
 pymoo
+pfevaluator
