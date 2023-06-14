@@ -11,15 +11,31 @@ import pandas as pd
 from smac import HyperparameterOptimizationFacade, Scenario
 
 from utils.argparse import parse_args
+from utils.common import make_dir
 from utils.input import ConfDict, create_configuration
 from utils.output import check_preferences
+from utils.pareto import get_pareto_indicators
 
 from utils.preference_learning import configspace, create_preference_dataset, objective
 
 
+def get_tuning_datasets():
+    return [
+        f"green_{elem}.json"
+        for elem in sorted(
+            [
+                int((p.split(".")[0]).split("_")[1])
+                for p in os.listdir(os.path.join("/", "home", "input"))
+                if ".json" in p
+            ]
+        )
+    ][:3]
+
+
 if __name__ == "__main__":
-    args, _ = parse_args()
-    create_configuration(args.conf_file)
+    datasets = get_tuning_datasets()
+    create_configuration(datasets)
+    ConfDict({"datasets": datasets, "indicators": {}})
 
     random.seed(ConfDict()["seed"])
     np.random.seed(ConfDict()["seed"])
@@ -27,20 +43,30 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.CRITICAL)
     logging.getLogger().setLevel(logging.CRITICAL)
 
-    if check_preferences(os.path.join(ConfDict()["output_folder"], "preferences.csv")):
-        X, y, preferences = create_preference_dataset(
-            preference_path=os.path.join(ConfDict()["output_folder"])
-        )
+    incumbents = {}
+    for indicator in ["hv", "sp", "ms", "r2"]:
+        for dataset in datasets:
+            if check_preferences(
+                os.path.join(ConfDict()[dataset]["output_folder"], "preferences.csv")
+            ):
+                X, y, preferences = create_preference_dataset(
+                    preference_path=os.path.join(ConfDict()[dataset]["output_folder"]),
+                    indicator=indicator,
+                )
 
-        ConfDict(
-            {
-                "X": X,
-                "Y": y,
-                "preferences": preferences[["pair_0", "pair_1"]].to_numpy(),
-                "iteration": 0,
-                "summary": pd.DataFrame(),
-            }
-        )
+                ConfDict()[dataset]["X"] = X
+                ConfDict()[dataset]["Y"] = y
+                ConfDict()[dataset]["preferences"] = preferences[
+                    ["pair_0", "pair_1"]
+                ].to_numpy()
+                ConfDict()["current_indicator"] = indicator
+                ConfDict()["indicators"][indicator] = {
+                    "iteration": 0,
+                    "summary": pd.DataFrame(),
+                }
+
+            else:
+                raise Exception(f"No preference file found for {dataset}")
 
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
@@ -81,16 +107,29 @@ if __name__ == "__main__":
             incumbent_cost = smac.validate(incumbent)
             print(f"Incumbent cost: {incumbent_cost}")
 
-            ConfDict()["summary"].to_csv(
-                os.path.join(ConfDict()["output_folder"], "preference_summary.csv"),
+            incumbents[indicator] = incumbent.get_dictionary()
+
+            ConfDict()["indicators"][indicator]["summary"].to_csv(
+                os.path.join(
+                    make_dir(
+                        os.path.join("/", "home", "output", "preference"),
+                    ),
+                    f"{indicator}.csv",
+                ),
                 index=False,
             )
 
-            with open(
-                os.path.join(ConfDict()["output_folder"], "preference_incumbent.json"),
-                "w",
-            ) as f:
-                json.dump(incumbent.get_dictionary(), f)
+    with open(
+        os.path.join(
+            "/",
+            "home",
+            "output",
+            "preference",
+            "incumbent.json",
+        ),
+        "w",
+    ) as f:
+        json.dump(incumbents, f)
 
 
 # %%

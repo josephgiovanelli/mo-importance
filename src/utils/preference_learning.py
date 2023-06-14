@@ -30,7 +30,7 @@ from utils.output import (
 )
 
 
-def create_preference_dataset(preference_path):
+def create_preference_dataset(preference_path, indicator):
     flatten_encoded = {
         key: np.array(value).flatten()
         for key, value in load_encoded(preference_path).items()
@@ -60,7 +60,7 @@ def create_preference_dataset(preference_path):
         [
             # np.array([0, 1] if preference == 0 else [1, 0])
             preference
-            for preference in preferences["preference"].to_numpy()
+            for preference in preferences[f"preference_{indicator}"].to_numpy()
         ]
     )
     return X, y, preferences
@@ -121,8 +121,10 @@ def configspace() -> ConfigurationSpace:
     return cs
 
 
-def compute_raw_results(config_dict, result_dict, mode, seed):
-    splits = KFold(n_splits=5, random_state=ConfDict()["seed"]).split(ConfDict()["X"])
+def compute_raw_results(config_dict, result_dict, dataset, mode, seed):
+    splits = KFold(n_splits=5, random_state=ConfDict()["seed"]).split(
+        ConfDict()[dataset]["X"]
+    )
 
     raw_results = []
     for train, test in splits:
@@ -130,40 +132,65 @@ def compute_raw_results(config_dict, result_dict, mode, seed):
         fate = MyRankSVM(**config_dict, random_state=seed)
         random.seed(seed)
         new_train = random.sample(list(train), 28 * i)
-        fate.fit(ConfDict()["X"][new_train].copy(), ConfDict()["Y"][new_train].copy())
+        fate.fit(
+            ConfDict()[dataset]["X"][new_train].copy(),
+            ConfDict()[dataset]["Y"][new_train].copy(),
+        )
 
         raw_results.append(
             pd.DataFrame(
                 {
-                    "pair_0": [pref[0] for pref in ConfDict()["preferences"][test]],
+                    "pair_0": [
+                        pref[0] for pref in ConfDict()[dataset]["preferences"][test]
+                    ],
                     "pair_0_score": [
                         elem
                         for list in fate.predict_scores(
-                            np.array([[elem[0]] for elem in ConfDict()["X"][test]])
+                            np.array(
+                                [[elem[0]] for elem in ConfDict()[dataset]["X"][test]]
+                            )
                         )
                         for elem in list
                     ],
-                    "pair_1": [pref[1] for pref in ConfDict()["preferences"][test]],
+                    "pair_1": [
+                        pref[1] for pref in ConfDict()[dataset]["preferences"][test]
+                    ],
                     "pair_1_score": [
                         elem
                         for list in fate.predict_scores(
-                            np.array([[elem[1]] for elem in ConfDict()["X"][test]])
+                            np.array(
+                                [[elem[1]] for elem in ConfDict()[dataset]["X"][test]]
+                            )
                         )
                         for elem in list
                     ],
-                    "y_true": ConfDict()["Y"][test],
-                    "y_pred": fate.predict(ConfDict()["X"][test].copy()),
+                    "y_true": ConfDict()[dataset]["Y"][test],
+                    "y_pred": fate.predict(ConfDict()[dataset]["X"][test].copy()),
                 }
             )
         )
 
-    result_dict[mode] = np.mean(
-        [accuracy_score(result["y_true"], result["y_pred"]) for result in raw_results]
+    result_dict[mode].append(
+        round(
+            np.mean(
+                [
+                    accuracy_score(result["y_true"], result["y_pred"])
+                    for result in raw_results
+                ]
+            ),
+            2,
+        )
     )
     pd.concat(raw_results, ignore_index=True).to_csv(
         os.path.join(
-            make_dir(os.path.join(ConfDict()["output_folder"], f"{mode}")),
-            f"""predictions_{ConfDict()["iteration"]}.csv""",
+            make_dir(
+                os.path.join(
+                    ConfDict()[dataset]["output_folder"],
+                    ConfDict()["current_indicator"],
+                    f"{mode}",
+                )
+            ),
+            f"""predictions_{ConfDict()["indicators"][ConfDict()["current_indicator"]]["iteration"]}.csv""",
         ),
         index=False,
     )
@@ -172,39 +199,38 @@ def compute_raw_results(config_dict, result_dict, mode, seed):
 def objective(config: Configuration, seed: int = 0) -> float:
     config_dict = config.get_dictionary()
     result_dict = {
-        "iteration": ConfDict()["iteration"],
-        "cross_validation_1": np.nan,
-        "cross_validation_2": np.nan,
-        "cross_validation_3": np.nan,
-        "cross_validation_4": np.nan,
+        "iteration": ConfDict()["indicators"][ConfDict()["current_indicator"]][
+            "iteration"
+        ],
+        "cross_validation_1": [],
+        "cross_validation_2": [],
+        "cross_validation_3": [],
+        "cross_validation_4": [],
     }
     try:
-        for mode in result_dict.keys():
-            if mode != "iteration":
-                compute_raw_results(config_dict, result_dict, mode, seed)
+        for dataset in ConfDict()["datasets"]:
+            for mode in result_dict.keys():
+                if mode != "iteration":
+                    compute_raw_results(config_dict, result_dict, dataset, mode, seed)
 
         log = "success"
     except Exception as e:
         log = e
 
-    ConfDict(
-        {
-            "summary": pd.concat(
-                [
-                    ConfDict()["summary"],
-                    pd.DataFrame(
-                        {
-                            **{key: [value] for key, value in result_dict.items()},
-                            **{key: [value] for key, value in config_dict.items()},
-                            **{"log": [log]},
-                        }
-                    ),
-                ],
-                ignore_index=True,
-            )
-        }
+    ConfDict()["indicators"][ConfDict()["current_indicator"]]["summary"] = pd.concat(
+        [
+            ConfDict()["indicators"][ConfDict()["current_indicator"]]["summary"],
+            pd.DataFrame(
+                {
+                    **{key: [value] for key, value in result_dict.items()},
+                    **{key: [value] for key, value in config_dict.items()},
+                    **{"log": [log]},
+                }
+            ),
+        ],
+        ignore_index=True,
     )
 
-    ConfDict({"iteration": ConfDict()["iteration"] + 1})
+    ConfDict()["indicators"][ConfDict()["current_indicator"]]["iteration"] += 1
 
-    return 1 - result_dict["cross_validation_4"]
+    return (1 - np.mean(result_dict["cross_validation_4"])) if ConfDict()["current_indicator"] in ["hv", "ms"] else np.mean(result_dict["cross_validation_4"]

@@ -15,10 +15,6 @@ from IPython.display import clear_output
 
 from sklearn.model_selection import KFold
 
-from pymoo.indicators.hv import Hypervolume
-from performance.r2 import R2
-from performance.spacing import Spacing
-from performance.spread import Spread
 
 from utils.argparse import parse_args
 from utils.input import ConfDict, create_configuration
@@ -29,6 +25,7 @@ from utils.output import (
     save_preferences,
     adapt_to_mode,
 )
+from utils.pareto import get_pareto_indicators
 
 
 def rSubset(arr, r):
@@ -58,38 +55,7 @@ if __name__ == "__main__":
     # random.shuffle(combinations)
 
     paretos = load_encoded(ConfDict()["output_folder"])
-    ref_point, ideal_point = [0, 0], [0, 0]
-    for obj_idx in range(len(ConfDict()["objectives"])):
-        ref_point[obj_idx] = adapt_to_mode(
-            ConfDict()["objectives"][obj_idx]["upper_bound"]
-            if ConfDict()["obj_modes"][obj_idx] == "min"
-            else ConfDict()["objectives"][obj_idx]["lower_bound"],
-            ConfDict()["obj_modes"][obj_idx],
-        )
-
-        if ConfDict()["obj_modes"][obj_idx] == "max":
-            for pareto in paretos.values():
-                for conf in pareto:
-                    conf[obj_idx] = adapt_to_mode(
-                        conf[obj_idx],
-                        ConfDict()["obj_modes"][obj_idx],
-                    )
-
-    indicators = {
-        "hv": {
-            "indicator": Hypervolume(ref_point=ref_point),
-            "mode": getattr(pd.Series, "idxmax"),
-        },
-        "sp": {"indicator": Spacing(), "mode": getattr(pd.Series, "idxmin")},
-        "ms": {
-            "indicator": Spread(nadir=ref_point, ideal=ideal_point),
-            "mode": getattr(pd.Series, "idxmax"),
-        },
-        "r2": {
-            "indicator": R2(ideal=ideal_point),
-            "mode": getattr(pd.Series, "idxmin"),
-        },
-    }
+    indicators = get_pareto_indicators()
 
     preferences = pd.DataFrame()
 

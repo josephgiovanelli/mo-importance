@@ -12,11 +12,42 @@ from smac.facade.abstract_facade import AbstractFacade
 from utils.input import ConfDict
 from utils.output import adapt_to_mode, save_paretos
 
+from pymoo.indicators.hv import Hypervolume
+from performance.r2 import R2
+from performance.spacing import Spacing
+from performance.spread import Spread
 
 __copyright__ = "Copyright 2021, AutoML.org Freiburg-Hannover"
 __license__ = "3-clause BSD"
 
 logging.getLogger("matplotlib.font_manager").setLevel(logging.ERROR)
+
+
+def get_pareto_indicators():
+    ref_point, ideal_point = [0, 0], [0, 0]
+    for obj_idx in range(len(ConfDict()["objectives"])):
+        ref_point[obj_idx] = adapt_to_mode(
+            ConfDict()["objectives"][obj_idx]["upper_bound"]
+            if ConfDict()["obj_modes"][obj_idx] == "min"
+            else ConfDict()["objectives"][obj_idx]["lower_bound"],
+            ConfDict()["obj_modes"][obj_idx],
+        )
+
+    return {
+        "hv": {
+            "indicator": Hypervolume(ref_point=ref_point),
+            "mode": getattr(pd.Series, "idxmax"),
+        },
+        "sp": {"indicator": Spacing(), "mode": getattr(pd.Series, "idxmin")},
+        "ms": {
+            "indicator": Spread(nadir=ref_point, ideal=ideal_point),
+            "mode": getattr(pd.Series, "idxmax"),
+        },
+        "r2": {
+            "indicator": R2(ideal=ideal_point),
+            "mode": getattr(pd.Series, "idxmin"),
+        },
+    }
 
 
 def get_pareto_from_history(history: list[dict]):

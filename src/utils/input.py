@@ -1,5 +1,7 @@
+from functools import reduce
 import os
 import json
+import copy
 from utils.common import make_dir
 
 from utils.dataset import load_dataset_from_openml
@@ -15,7 +17,7 @@ class ConfDict(dict):
         return dict(cls.instance)
 
 
-def create_configuration(file_name: str, origin: str = "preliminar_sampling"):
+def get_configuration(file_name: str, origin: str = "preliminar_sampling"):
     with open(os.path.join("/", "home", "input", file_name)) as file:
         conf = json.load(file)
 
@@ -42,5 +44,26 @@ def create_configuration(file_name: str, origin: str = "preliminar_sampling"):
             conf["use_case_objective"]["sensitive_feature_idx"] = conf[
                 "feature_names"
             ].index(conf["use_case_objective"]["sensitive_feature"])
+
+    return conf
+
+
+def create_configuration(file_name, origin="preliminar_sampling"):
+    if isinstance(file_name, str):
+        conf = get_configuration(file_name, origin)
+    else:
+        conf = {f"{file}": get_configuration(file, origin) for file in file_name}
+
+        test_list = list(conf.values())
+        common_keys = reduce(
+            lambda acc, key: acc
+            + (
+                [key] if all(test_list[0][key] == ele[key] for ele in test_list) else []
+            ),
+            list(test_list[0].keys()),
+            [],
+        )
+        for key in common_keys:
+            conf[key] = copy.deepcopy(test_list[0][key])
 
     ConfDict(conf)
