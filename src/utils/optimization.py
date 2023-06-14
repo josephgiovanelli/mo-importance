@@ -143,13 +143,7 @@ def single_objective(model: str):
 
     update_config(ConfDict()["paretos"])
 
-    if check_pictures():
-        save_paretos(
-            encode_pareto(ConfDict()["paretos"]),
-            make_dir(os.path.join(ConfDict()["output_folder"], model)),
-            "encoded",
-        )
-    else:
+    if not check_pictures():
         for idx, history in enumerate(ConfDict()["paretos"]):
             plot_pareto_from_history(
                 history,
@@ -159,3 +153,9 @@ def single_objective(model: str):
                 ),
                 title=f"""{model.capitalize().replace("_", "-")} w/ {ConfDict()["optimization_samples"]} samples""",
             )
+
+        save_paretos(
+            encode_pareto(ConfDict()["paretos"]),
+            make_dir(os.path.join(ConfDict()["output_folder"], model)),
+            "encoded",
+        )

@@ -1,11 +1,9 @@
+import numpy as np
+
 from pymoo.indicators.hv import Hypervolume
 from performance.r2 import R2
 from performance.spacing import Spacing
-import numpy as np
 from performance.spread import Spread
-import pfevaluator
-
-from scipy.spatial import distance
 
 
 def calc_crowding_distance(F):
@@ -72,15 +70,19 @@ ideal_point = np.array([0, 0])
 indHV = Hypervolume(ref_point=ref_point)
 print("HV", indHV(A))
 print("HV", indHV(B))
+print()
 
 indSP = Spacing()
 print("SP", indSP(A))
 print("SP", indSP(B))
+print()
 
 indMS = Spread(nadir=ref_point, ideal=ideal_point)
 print("MS", indMS(A))
 print("MS", indMS(B))
+print()
 
 indR2 = R2(ideal=ideal_point)
 print("R2", indR2(A))
 print("R2", indR2(B))
+print()

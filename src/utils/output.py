@@ -1,5 +1,6 @@
 import math
 import os
+import copy
 from utils.input import ConfDict
 
 import numpy as np
@@ -51,6 +52,12 @@ def save_preferences(preferences):
     preferences.to_csv(
         os.path.join(ConfDict()["output_folder"], "preferences.csv"), index=False
     )
+
+
+def save_config(file_name):
+    ConfDict()["output_folder"] = file_name.split(".")[0]
+    with open(os.path.join("/", "home", "input", file_name), "w") as f:
+        json.dump(ConfDict(), f)
 
 
 def check_dump():

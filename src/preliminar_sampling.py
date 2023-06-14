@@ -28,6 +28,7 @@ from utils.output import (
     check_dump,
     load_dump,
     update_config,
+    save_config,
 )
 
 __copyright__ = "Copyright 2021, AutoML.org Freiburg-Hannover"
@@ -69,9 +70,10 @@ if __name__ == "__main__":
             plot_pareto_from_history(
                 history,
                 os.path.join(ConfDict()["output_folder"], str(idx)),
-                title="7593",
+                title=ConfDict()["task"],
             )
 
     save_paretos(encode_pareto(paretos), ConfDict()["output_folder"], "encoded")
+    save_config(args.conf_file)
 
 # %%

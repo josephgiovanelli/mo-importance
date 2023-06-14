@@ -11,6 +11,9 @@ class ConfDict(dict):
             cls.instance = super(ConfDict, cls).__new__(cls)
         return cls.instance
 
+    def get_dict(cls):
+        return dict(cls.instance)
+
 
 def create_configuration(file_name: str, origin: str = "preliminar_sampling"):
     with open(os.path.join("/", "home", "input", file_name)) as file:
