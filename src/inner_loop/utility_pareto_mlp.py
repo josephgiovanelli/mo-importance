@@ -28,7 +28,13 @@ from inner_loop.pareto_mlp import ParetoMLP
 from my_model.my_grid_model import MyGridModel
 from ranker.my_rank_svc import MyRankSVM
 from utils.input import ConfDict
-from utils.output import adapt_paretos, check_preferences, load_json_file, update_config
+from utils.output import (
+    adapt_paretos,
+    check_preferences,
+    load_json_file,
+    update_config,
+    adapt_encoded,
+)
 from utils.pareto import encode_pareto, get_pareto_indicators
 from utils.preference_learning import create_preference_dataset
 
@@ -78,16 +84,25 @@ class UtilityParetoMLP(ParetoMLP):
             warnings.filterwarnings("ignore")
 
             pareto = [super().train(random_config, seed, budget)]
+            adapt_paretos(pareto)
             scores = {}
             try:
                 scores["indicators"] = {
-                    acronym: indicator["indicator"](np.array(encode_pareto(pareto)[0]))
+                    acronym: indicator["indicator"](
+                        np.array(
+                            adapt_encoded(
+                                {
+                                    idx: elem
+                                    for idx, elem in enumerate(encode_pareto(pareto))
+                                }
+                            )[0]
+                        )
+                    )
                     for acronym, indicator in self.indicators_.items()
                 }
             except Exception as e:
                 print(e)
 
-            adapt_paretos(pareto)
             flatten_encoded = np.array(encode_pareto(pareto)).flatten()
 
             try:
