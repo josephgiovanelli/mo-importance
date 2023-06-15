@@ -19,11 +19,13 @@ from sklearn.model_selection import KFold
 from utils.argparse import parse_args
 from utils.input import ConfDict, create_configuration
 from utils.output import (
+    adapt_paretos,
     load_encoded,
     check_preferences,
     load_preferences,
     save_preferences,
     adapt_to_mode,
+    adapt_encoded,
 )
 from utils.pareto import get_pareto_indicators
 
@@ -54,7 +56,7 @@ if __name__ == "__main__":
     tot = len(combinations)
     # random.shuffle(combinations)
 
-    paretos = load_encoded(ConfDict()["output_folder"])
+    paretos = adapt_encoded(load_encoded(ConfDict()["output_folder"]))
     indicators = get_pareto_indicators()
 
     preferences = pd.DataFrame()
@@ -63,9 +65,9 @@ if __name__ == "__main__":
         scores = [
             {
                 f"pair_{idx}": pair[idx],
-                f"score_{idx}_{acronym}": indicator["indicator"](encoded),
+                f"score_{idx}_{acronym}": indicator["indicator"](pareto),
             }
-            for idx, encoded in enumerate(
+            for idx, pareto in enumerate(
                 [np.array(paretos[str(elem)]) for elem in pair]
             )
             for acronym, indicator in indicators.items()

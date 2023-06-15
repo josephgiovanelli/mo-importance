@@ -233,4 +233,4 @@ def objective(config: Configuration, seed: int = 0) -> float:
 
     ConfDict()["indicators"][ConfDict()["current_indicator"]]["iteration"] += 1
 
-    return (1 - np.mean(result_dict["cross_validation_4"])) if ConfDict()["current_indicator"] in ["hv", "ms"] else np.mean(result_dict["cross_validation_4"]
+    return 1 - np.mean(result_dict["cross_validation_4"])

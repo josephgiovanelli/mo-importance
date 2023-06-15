@@ -15,8 +15,8 @@ from pymoo.indicators.distance_indicator import (
 
 class Spread(Indicator):
     def __init__(self, ideal=None, nadir=None):
-        """Spacing indicator
-        The smaller the value this indicator assumes, the most uniform is the distribution of elements on the pareto front.
+        """Spread indicator
+        The higher the value this indicator assumes, the most spread is the distribution of elements on the pareto front.
 
         Parameters
         ----------
@@ -33,7 +33,7 @@ class Spread(Indicator):
         self.metrics = ["MS"]
 
     def do(self, F, *args, **kwargs):
-        """Obtain the spacing indicator given a Pareto front
+        """Obtain the spread indicator given a Pareto front
 
         Parameters
         ----------
@@ -43,7 +43,7 @@ class Spread(Indicator):
         Returns
         -------
         float
-            Spacing indicator
+            Spread indicator
         """
         return super().do(F, *args, **kwargs)
 

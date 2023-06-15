@@ -26,6 +26,18 @@ def adapt_paretos(paretos):
                     )
 
 
+def adapt_encoded(paretos):
+    for obj_idx in range(len(ConfDict()["objectives"])):
+        if ConfDict()["obj_modes"][obj_idx] == "max":
+            for key, pareto in paretos.items():
+                for conf in pareto:
+                    conf[obj_idx] = adapt_to_mode(
+                        conf[obj_idx],
+                        ConfDict()["obj_modes"][obj_idx],
+                    )
+    return paretos
+
+
 def update_config(paretos):
     for obj_idx in range(len(ConfDict()["objectives"])):
         for bound in ["upper_bound", "lower_bound"]:
@@ -60,8 +72,8 @@ def save_config(file_name):
         json.dump(ConfDict(), f)
 
 
-def check_dump():
-    return os.path.isfile(os.path.join(ConfDict()["output_folder"], "dump.json"))
+def check_dump(file_name="dump.json"):
+    return os.path.isfile(os.path.join(ConfDict()["output_folder"], file_name))
 
 
 def check_encoded():
@@ -87,10 +99,8 @@ def load_json_file(file_path):
     return json_file
 
 
-def load_dump():
-    return load_json_file(
-        os.path.join(ConfDict()["output_folder"], "dump.json")
-    ).values()
+def load_dump(file_name="dump.json"):
+    return load_json_file(os.path.join(ConfDict()["output_folder"], file_name)).values()
 
 
 def load_encoded(path):

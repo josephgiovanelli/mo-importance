@@ -4,6 +4,31 @@ from pymoo.indicators.hv import Hypervolume
 from performance.r2 import R2
 from performance.spacing import Spacing
 from performance.spread import Spread
+from smac import HyperparameterOptimizationFacade as HPOFacade
+from smac import Scenario
+from smac.model.random_model import RandomModel
+
+from utils.argparse import parse_args
+from utils.common import make_dir
+from utils.dataset import load_dataset_from_openml
+from utils.optimization import multi_objective, single_objective
+from utils.pareto import (
+    encode_pareto,
+    get_pareto_from_history,
+    plot_pareto_from_history,
+    plot_pareto_from_smac,
+    get_pareto_indicators,
+)
+from utils.sample import grid_search, random_search
+from utils.input import ConfDict, create_configuration
+from utils.output import (
+    adapt_paretos,
+    check_pictures,
+    save_paretos,
+    check_dump,
+    load_dump,
+    update_config,
+)
 
 
 def calc_crowding_distance(F):
@@ -61,10 +86,10 @@ def calc_crowding_distance(F):
     return crowding
 
 
-A = np.array([[2, 0.5], [4, 0.4], [6, 0.3], [8, 0.2]])
-B = np.array([[1, 0.5], [2, 0.4], [3, 0.3], [5, 0.2]])
+A = np.array([[2, 0.5], [4, 0.6], [6, 0.7], [8, 0.8]])
+B = np.array([[1, 0.5], [2, 0.6], [3, 0.7], [5, 0.8]])
 
-ref_point = np.array([10, 1])
+ref_point = np.array([10, 0.5])
 ideal_point = np.array([0, 0])
 
 indHV = Hypervolume(ref_point=ref_point)
@@ -86,3 +111,53 @@ indR2 = R2(ideal=ideal_point)
 print("R2", indR2(A))
 print("R2", indR2(B))
 print()
+
+args, _ = parse_args()
+create_configuration(
+    file_name=args.conf_file,
+    origin="optimization",
+)
+indicators = get_pareto_indicators()
+print(
+    indicators["hv"]["indicator"](
+        np.array(
+            [
+                [1 - elem[0], elem[1]]
+                for elem in [
+                    [0.7736345672607422, 0.3786627848943075],
+                    [0.8181299591064453, 0.9016474088033041],
+                    [0.8181299591064453, 0.9016474088033041],
+                    [0.8181299591064453, 0.9016474088033041],
+                    [0.8181299591064453, 0.9016474088033041],
+                    [0.8181299591064453, 0.9016474088033041],
+                    [0.8181299591064453, 0.9016474088033041],
+                    [0.8181299591064453, 0.9016474088033041],
+                    [0.8181299591064453, 0.9016474088033041],
+                    [0.8181299591064453, 0.9016474088033041],
+                ]
+            ]
+        )
+    )
+)
+
+print(
+    indicators["hv"]["indicator"](
+        np.array(
+            [
+                [1 - elem[0], elem[1]]
+                for elem in [
+                    [0.665311279296875, 0.33026303847630817],
+                    [0.7948455047607422, 1.7664515177408855],
+                    [0.8007740020751953, 3.477466901143392],
+                    [0.805676498413086, 4.966122309366861],
+                    [0.813238525390625, 7.054574330647786],
+                    [0.8215357208251953, 8.829967498779297],
+                    [0.830468521118164, 11.140373229980469],
+                    [0.8359800720214844, 13.284662882486979],
+                    [0.8412681579589844, 16.03728993733724],
+                    [0.8453408050537109, 18.528917948404946],
+                ]
+            ]
+        )
+    )
+)

@@ -8,11 +8,9 @@ import numpy as np
 from smac import HyperparameterOptimizationFacade as HPOFacade
 from smac import Scenario
 from smac.model.random_model import RandomModel
-from inner_loop.hyper_pareto_mlp import HyperParetoMLP
 from inner_loop.mlp import MLP
 
-from inner_loop.pareto_mlp import ParetoMLP
-from inner_loop.preference_pareto_mlp import PreferenceParetoMLP
+from inner_loop.utility_pareto_mlp import UtilityParetoMLP
 
 from utils.argparse import parse_args
 from utils.common import make_dir
@@ -84,14 +82,18 @@ def multi_objective():
     )
 
 
-def single_objective(model: str):
-    if check_dump():
-        ConfDict({"paretos": load_dump()})
+def single_objective(main_indicator="hv", mode="preferences"):
+    new_output_path = make_dir(
+        os.path.join(ConfDict()["output_folder"], mode, main_indicator)
+    )
+    if check_dump(file_name=os.path.join(new_output_path, "dump.json")):
+        ConfDict(
+            {"paretos": load_dump(file_name=os.path.join(new_output_path, "dump.json"))}
+        )
     else:
-        if model == "preference_learning":
-            mlp = PreferenceParetoMLP("lcbench")
-        else:
-            mlp = HyperParetoMLP("lcbench")
+        mlp = UtilityParetoMLP(
+            implementation="lcbench", main_indicator=main_indicator, mode=mode
+        )
 
         ConfDict({"paretos": []})
         ConfDict({"scores": []})
@@ -130,12 +132,12 @@ def single_objective(model: str):
 
         save_paretos(
             ConfDict()["paretos"],
-            make_dir(os.path.join(ConfDict()["output_folder"], model)),
+            new_output_path,
             "dump",
         )
         save_paretos(
             np.array(ConfDict()["scores"]).flatten(),
-            make_dir(os.path.join(ConfDict()["output_folder"], model)),
+            new_output_path,
             "scores",
         )
 
@@ -148,14 +150,14 @@ def single_objective(model: str):
             plot_pareto_from_history(
                 history,
                 os.path.join(
-                    make_dir(os.path.join(ConfDict()["output_folder"], model)),
+                    new_output_path,
                     str(idx),
                 ),
-                title=f"""{model.capitalize().replace("_", "-")} w/ {ConfDict()["optimization_samples"]} samples""",
+                title=f"""{mode.capitalize()} w/ {main_indicator.capitalize()} ({ConfDict()["optimization_samples"]} samples)""",
             )
 
         save_paretos(
             encode_pareto(ConfDict()["paretos"]),
-            make_dir(os.path.join(ConfDict()["output_folder"], model)),
+            new_output_path,
             "encoded",
         )

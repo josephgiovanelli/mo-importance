@@ -10,9 +10,6 @@ from smac import HyperparameterOptimizationFacade as HPOFacade
 from smac import Scenario
 from smac.model.random_model import RandomModel
 
-from inner_loop.pareto_mlp import ParetoMLP
-from inner_loop.preference_pareto_mlp import PreferenceParetoMLP
-
 from utils.argparse import parse_args
 from utils.common import make_dir
 from utils.dataset import load_dataset_from_openml
@@ -22,6 +19,7 @@ from utils.pareto import (
     get_pareto_from_history,
     plot_pareto_from_history,
     plot_pareto_from_smac,
+    get_pareto_indicators,
 )
 from utils.sample import grid_search, random_search
 from utils.input import ConfDict, create_configuration
@@ -47,10 +45,10 @@ if __name__ == "__main__":
 
     random.seed(ConfDict()["seed"])
     np.random.seed(ConfDict()["seed"])
-
-    single_objective("preference_learning")
+    for main_indicator in get_pareto_indicators().keys():
+        for mode in ["indicators", "preferences"]:
+            single_objective(main_indicator=main_indicator, mode=mode)
     multi_objective()
-    single_objective("hyper_volume")
 
 
 # %%

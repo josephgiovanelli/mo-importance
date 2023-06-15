@@ -10,7 +10,7 @@ def parse_args():
         "--conf_file",
         nargs="?",
         type=str,
-        default="green_3945.json",
+        default="green_126025.json",
         help="configuration file name",
     )
 
