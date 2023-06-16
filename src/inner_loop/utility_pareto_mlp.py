@@ -46,7 +46,11 @@ from inner_loop.mlp import MLP
 
 class UtilityParetoMLP(ParetoMLP):
     def __init__(
-        self, implementation="sklearn", main_indicator="hv", mode="preferences"
+        self,
+        implementation="sklearn",
+        main_indicator="hv",
+        mode="preferences",
+        preference_budget=None,
     ):
         super().__init__(implementation)
 
@@ -67,7 +71,10 @@ class UtilityParetoMLP(ParetoMLP):
                 X, y, _ = create_preference_dataset(
                     preference_path=preference_path, indicator=indicator
                 )
-                indeces = random.sample(range(len(y)), 28)
+                if preference_budget == None:
+                    indeces = range(len(y))
+                else:
+                    indeces = ConfDict()[f"indeces_{preference_budget}"]
                 model.fit(X[indeces].copy(), y[indeces].copy())
         else:
             raise Exception("No preferences found")

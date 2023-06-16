@@ -36,9 +36,13 @@ from utils.output import (
 )
 
 
-def multi_objective(mode="fair"):
+def multi_objective(mode="fair", preference_budget=None):
     new_output_path = make_dir(
-        os.path.join(ConfDict()["output_folder"], f"multi_objective_{mode}")
+        os.path.join(
+            ConfDict()["output_folder"],
+            f"multi_objective_{mode}",
+            str(preference_budget),
+        )
     )
     if check_dump(file_name=os.path.join(new_output_path, "encoded.json")):
         ConfDict(
@@ -98,7 +102,9 @@ def multi_objective(mode="fair"):
 
         history = get_pareto_from_smac(smac, incumbents)
 
-        mlp = UtilityParetoMLP(implementation="lcbench")
+        mlp = UtilityParetoMLP(
+            implementation="lcbench", preference_budget=preference_budget
+        )
         pareto_costs = history["pareto_costs"]
         if len(pareto_costs) < 10:
             for i in range(len(pareto_costs), 10):
@@ -132,9 +138,11 @@ def multi_objective(mode="fair"):
             )
 
 
-def single_objective(main_indicator="hv", mode="preferences"):
+def single_objective(main_indicator="hv", mode="preferences", preference_budget=None):
     new_output_path = make_dir(
-        os.path.join(ConfDict()["output_folder"], mode, main_indicator)
+        os.path.join(
+            ConfDict()["output_folder"], mode, main_indicator, str(preference_budget)
+        )
     )
     if check_dump(file_name=os.path.join(new_output_path, "dump.json")):
         ConfDict(
@@ -149,7 +157,10 @@ def single_objective(main_indicator="hv", mode="preferences"):
         )
     else:
         mlp = UtilityParetoMLP(
-            implementation="lcbench", main_indicator=main_indicator, mode=mode
+            implementation="lcbench",
+            main_indicator=main_indicator,
+            mode=mode,
+            preference_budget=preference_budget,
         )
 
         ConfDict({"paretos": []})

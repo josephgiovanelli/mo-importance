@@ -1,5 +1,6 @@
 # %%
 from __future__ import annotations
+from itertools import combinations
 import os
 import time
 import random
@@ -45,11 +46,36 @@ if __name__ == "__main__":
 
     random.seed(ConfDict()["seed"])
     np.random.seed(ConfDict()["seed"])
+    n_folds = 5
+    combination_per_fold = len(
+        list(combinations(range(int(ConfDict()["random_samples"] / n_folds)), 2))
+    )
+    preference_budgets = np.linspace(
+        combination_per_fold,
+        combination_per_fold * n_folds,
+        n_folds,
+        dtype=int,
+        endpoint=True,
+    )
+    for preference_budget in preference_budgets:
+        ConfDict(
+            {
+                f"indeces_{preference_budget}": random.sample(
+                    range(combination_per_fold * n_folds), preference_budget
+                )
+            }
+        )
     for main_indicator in get_pareto_indicators().keys():
         for mode in ["indicators", "preferences"]:
-            single_objective(main_indicator=main_indicator, mode=mode)
+            for preference_budget in preference_budgets:
+                single_objective(
+                    main_indicator=main_indicator,
+                    mode=mode,
+                    preference_budget=preference_budget,
+                )
     for mode in ["fair", "unfair"]:
-        multi_objective(mode=mode)
+        for preference_budget in preference_budgets:
+            multi_objective(mode=mode, preference_budget=preference_budget)
 
 
 # %%
