@@ -4,6 +4,7 @@ import time
 import random
 
 import numpy as np
+import pandas as pd
 
 from smac import HyperparameterOptimizationFacade as HPOFacade
 from smac import Scenario
@@ -17,9 +18,11 @@ from utils.common import make_dir
 from utils.dataset import load_dataset_from_openml
 from utils.pareto import (
     encode_pareto,
+    get_pareto_from_smac,
     get_pareto_from_history,
     plot_pareto_from_history,
     plot_pareto_from_smac,
+    plot_pareto,
 )
 from utils.sample import grid_search, random_search
 from utils.input import ConfDict, create_configuration
@@ -33,53 +36,100 @@ from utils.output import (
 )
 
 
-def multi_objective():
-    mlp = MLP("lcbench")
-
-    # Define our environment variables
-    scenario = Scenario(
-        mlp.configspace,
-        objectives=ConfDict()["obj_metrics"],
-        n_trials=ConfDict()["optimization_samples"] * ConfDict()["grid_samples"],
-        seed=ConfDict()["seed"],
-        n_workers=1,
+def multi_objective(mode="fair"):
+    new_output_path = make_dir(
+        os.path.join(ConfDict()["output_folder"], f"multi_objective_{mode}")
     )
+    if check_dump(file_name=os.path.join(new_output_path, "encoded.json")):
+        ConfDict(
+            {
+                "paretos": load_dump(
+                    file_name=os.path.join(new_output_path, "encoded.json")
+                ),
+                "scores": load_dump(
+                    file_name=os.path.join(new_output_path, "scores.json")
+                ),
+            },
+        )
+    else:
+        mlp = MLP("lcbench")
 
-    # We want to run five random configurations before starting the optimization.
-    initial_design = HPOFacade.get_initial_design(scenario, n_configs=5)
-    intensifier = HPOFacade.get_intensifier(scenario, max_config_calls=1)
+        ConfDict({"paretos": []})
+        ConfDict({"scores": []})
 
-    # Create our SMAC object and pass the scenario and the train method
-    smac = HPOFacade(
-        scenario,
-        mlp.train,
-        initial_design=initial_design,
-        intensifier=intensifier,
-        overwrite=True,
-    )
+        n_trials = ConfDict()["optimization_samples"] * (
+            ConfDict()["grid_samples"] if mode == "fair" else 1
+        )
 
-    # Let's optimize
-    incumbents = smac.optimize()
+        # Define our environment variables
+        scenario = Scenario(
+            mlp.configspace,
+            objectives=ConfDict()["obj_metrics"],
+            n_trials=n_trials,
+            seed=ConfDict()["seed"],
+            n_workers=1,
+        )
 
-    # Get cost of default configuration
-    default_cost = smac.validate(mlp.configspace.get_default_configuration())
-    print(f"Validated costs from default config: \n--- {default_cost}\n")
+        # We want to run five random configurations before starting the optimization.
+        initial_design = HPOFacade.get_initial_design(scenario, n_configs=5)
+        intensifier = HPOFacade.get_intensifier(scenario, max_config_calls=1)
 
-    print("Validated costs from the Pareto front (incumbents):")
-    for incumbent in incumbents:
-        print("---", incumbent)
-        cost = smac.validate(incumbent)
-        print("---", cost)
+        # Create our SMAC object and pass the scenario and the train method
+        smac = HPOFacade(
+            scenario,
+            mlp.train,
+            initial_design=initial_design,
+            intensifier=intensifier,
+            overwrite=True,
+        )
 
-    plot_pareto_from_smac(
-        smac,
-        incumbents,
-        os.path.join(
-            make_dir(os.path.join(ConfDict()["output_folder"], "multi_objective")),
-            "best",
-        ),
-        title=f"""Sample Multi-objective  w/ {ConfDict()["optimization_samples"]* ConfDict()["grid_samples"]} samples""",
-    )
+        # Let's optimize
+        incumbents = smac.optimize()
+
+        # Get cost of default configuration
+        default_cost = smac.validate(mlp.configspace.get_default_configuration())
+        print(f"Validated costs from default config: \n--- {default_cost}\n")
+
+        print("Validated costs from the Pareto front (incumbents):")
+        for incumbent in incumbents:
+            print("---", incumbent)
+            cost = smac.validate(incumbent)
+            print("---", cost)
+
+        history = get_pareto_from_smac(smac, incumbents)
+
+        mlp = UtilityParetoMLP(implementation="lcbench")
+        pareto_costs = history["pareto_costs"]
+        if len(pareto_costs) < 10:
+            for i in range(len(pareto_costs), 10):
+                pareto_costs.append([np.nan, np.nan])
+        pareto_costs = pd.DataFrame(pareto_costs).ffill().bfill().values.tolist()
+        pareto_scores = mlp.get_scores_from_encoded([pareto_costs])
+
+        ConfDict({"paretos": ConfDict()["paretos"] + [pareto_costs]})
+        ConfDict({"scores": ConfDict()["scores"] + [pareto_scores]})
+
+        save_paretos(
+            np.array(ConfDict()["scores"]).flatten(),
+            new_output_path,
+            "scores",
+        )
+        save_paretos(
+            ConfDict()["paretos"],
+            new_output_path,
+            "encoded",
+        )
+
+        file_name = "best"
+        if not check_pictures(output_path=new_output_path, file_name=file_name):
+            plot_pareto(
+                history,
+                os.path.join(
+                    new_output_path,
+                    file_name,
+                ),
+                title=f"""Sample Multi-objective  w/ {n_trials} samples""",
+            )
 
 
 def single_objective(main_indicator="hv", mode="preferences"):
@@ -88,7 +138,14 @@ def single_objective(main_indicator="hv", mode="preferences"):
     )
     if check_dump(file_name=os.path.join(new_output_path, "dump.json")):
         ConfDict(
-            {"paretos": load_dump(file_name=os.path.join(new_output_path, "dump.json"))}
+            {
+                "paretos": load_dump(
+                    file_name=os.path.join(new_output_path, "dump.json")
+                ),
+                "scores": load_dump(
+                    file_name=os.path.join(new_output_path, "scores.json")
+                ),
+            },
         )
     else:
         mlp = UtilityParetoMLP(
@@ -140,12 +197,17 @@ def single_objective(main_indicator="hv", mode="preferences"):
             new_output_path,
             "scores",
         )
+        save_paretos(
+            encode_pareto(ConfDict()["paretos"]),
+            new_output_path,
+            "encoded",
+        )
 
     # print(f"Optimization time: {time.time() - start_time}")
 
     update_config(ConfDict()["paretos"])
 
-    if not check_pictures():
+    if not check_pictures(output_path=new_output_path):
         for idx, history in enumerate(ConfDict()["paretos"]):
             plot_pareto_from_history(
                 history,
@@ -155,9 +217,3 @@ def single_objective(main_indicator="hv", mode="preferences"):
                 ),
                 title=f"""{mode.capitalize()} w/ {main_indicator.capitalize()} ({ConfDict()["optimization_samples"]} samples)""",
             )
-
-        save_paretos(
-            encode_pareto(ConfDict()["paretos"]),
-            new_output_path,
-            "encoded",
-        )

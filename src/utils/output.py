@@ -84,13 +84,24 @@ def check_preferences(preference_path):
     return os.path.isfile(preference_path)
 
 
-def check_pictures():
-    return all(
-        [
-            os.path.isfile(os.path.join(ConfDict()["output_folder"], f"{idx}.png"))
-            for idx in range(ConfDict()["random_samples"])
-        ]
-    )
+def check_pictures(output_path=None, file_name=None):
+    if output_path == None:
+        output_path = ConfDict()["output_folder"]
+    if file_name == None:
+        return all(
+            [
+                os.path.isfile(os.path.join(output_path, f"{idx}.png"))
+                for idx in range(
+                    ConfDict()[
+                        "random_samples"
+                        if ConfDict()["output_folder"].split("/")[-1] != "optimization"
+                        else "optimization_samples"
+                    ]
+                )
+            ]
+        )
+    else:
+        return os.path.isfile(os.path.join(output_path, f"{file_name}.png"))
 
 
 def load_json_file(file_path):

@@ -48,7 +48,8 @@ if __name__ == "__main__":
     for main_indicator in get_pareto_indicators().keys():
         for mode in ["indicators", "preferences"]:
             single_objective(main_indicator=main_indicator, mode=mode)
-    multi_objective()
+    for mode in ["fair", "unfair"]:
+        multi_objective(mode=mode)
 
 
 # %%

@@ -1,4 +1,5 @@
 from __future__ import annotations
+import copy
 import os
 
 import warnings
@@ -74,6 +75,33 @@ class UtilityParetoMLP(ParetoMLP):
         self.main_indicator = main_indicator
         self.mode = mode
 
+    def get_indicators(self, encoded):
+        return {
+            acronym: indicator["indicator"](
+                np.array(
+                    adapt_encoded({idx: elem for idx, elem in enumerate(encoded)})[0]
+                )
+            )
+            for acronym, indicator in self.indicators_.items()
+        }
+
+    def get_preferences(self, encoded):
+        return {
+            acronym: model.predict_scores(np.array([[np.array(encoded).flatten()]]))[0][
+                0
+            ]
+            for acronym, model in self.preference_models_.items()
+        }
+
+    def get_scores_from_encoded(self, encoded):
+        return {
+            "indicators": self.get_indicators(copy.deepcopy(encoded)),
+            "preferences": self.get_preferences(copy.deepcopy(encoded)),
+        }
+
+    def get_scores(self, pareto):
+        return self.get_scores_from_encoded(encode_pareto(pareto))
+
     def train(
         self,
         random_config: Configuration,
@@ -85,33 +113,8 @@ class UtilityParetoMLP(ParetoMLP):
 
             pareto = [super().train(random_config, seed, budget)]
             adapt_paretos(pareto)
-            scores = {}
-            try:
-                scores["indicators"] = {
-                    acronym: indicator["indicator"](
-                        np.array(
-                            adapt_encoded(
-                                {
-                                    idx: elem
-                                    for idx, elem in enumerate(encode_pareto(pareto))
-                                }
-                            )[0]
-                        )
-                    )
-                    for acronym, indicator in self.indicators_.items()
-                }
-            except Exception as e:
-                print(e)
 
-            flatten_encoded = np.array(encode_pareto(pareto)).flatten()
-
-            try:
-                scores["preferences"] = {
-                    acronym: model.predict_scores(np.array([[flatten_encoded]]))[0][0]
-                    for acronym, model in self.preference_models_.items()
-                }
-            except Exception as e:
-                print(e)
+            scores = self.get_scores(pareto)
 
             ConfDict({"paretos": ConfDict()["paretos"] + pareto})
             ConfDict({"scores": ConfDict()["scores"] + [scores]})
