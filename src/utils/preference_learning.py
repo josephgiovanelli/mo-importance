@@ -1,3 +1,4 @@
+from itertools import combinations
 import os
 import random
 
@@ -234,3 +235,26 @@ def objective(config: Configuration, seed: int = 0) -> float:
     ConfDict()["indicators"][ConfDict()["current_indicator"]]["iteration"] += 1
 
     return 1 - np.mean(result_dict["cross_validation_4"])
+
+
+def get_preference_budgets():
+    n_folds = 5
+    combination_per_fold = len(
+        list(combinations(range(int(ConfDict()["random_samples"] / n_folds)), 2))
+    )
+    preference_budgets = np.linspace(
+        combination_per_fold,
+        combination_per_fold * n_folds,
+        n_folds,
+        dtype=int,
+        endpoint=True,
+    )
+    for preference_budget in preference_budgets:
+        ConfDict(
+            {
+                f"indeces_{preference_budget}": random.sample(
+                    range(combination_per_fold * n_folds), preference_budget
+                )
+            }
+        )
+    return preference_budgets

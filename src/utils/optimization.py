@@ -37,25 +37,10 @@ from utils.output import (
 
 
 def multi_objective(mode="fair", preference_budget=None):
-    new_output_path = make_dir(
-        os.path.join(
-            ConfDict()["output_folder"],
-            f"multi_objective_{mode}",
-            str(preference_budget),
-        )
+    new_output_path, is_dump = restore_results(
+        mode=mode, main_indicator=None, preference_budget=preference_budget
     )
-    if check_dump(file_name=os.path.join(new_output_path, "encoded.json")):
-        ConfDict(
-            {
-                "paretos": load_dump(
-                    file_name=os.path.join(new_output_path, "encoded.json")
-                ),
-                "scores": load_dump(
-                    file_name=os.path.join(new_output_path, "scores.json")
-                ),
-            },
-        )
-    else:
+    if not is_dump:
         mlp = MLP("lcbench")
 
         ConfDict({"paretos": []})
@@ -138,24 +123,57 @@ def multi_objective(mode="fair", preference_budget=None):
             )
 
 
-def single_objective(main_indicator="hv", mode="preferences", preference_budget=None):
+def restore_results(mode, main_indicator, preference_budget):
     new_output_path = make_dir(
         os.path.join(
-            ConfDict()["output_folder"], mode, main_indicator, str(preference_budget)
+            ConfDict()["output_folder"],
+            *(
+                [mode, main_indicator]
+                if main_indicator != None
+                else [f"multi_objective_{mode}"]
+            ),
+            str(preference_budget),
         )
     )
-    if check_dump(file_name=os.path.join(new_output_path, "dump.json")):
+    dump_file = "dump" if main_indicator != None else "encoded"
+    is_dump = check_dump(file_name=os.path.join(new_output_path, f"{dump_file}.json"))
+    if is_dump:
         ConfDict(
             {
-                "paretos": load_dump(
-                    file_name=os.path.join(new_output_path, "dump.json")
+                "paretos": list(
+                    load_dump(
+                        file_name=os.path.join(new_output_path, f"{dump_file}.json")
+                    )
                 ),
-                "scores": load_dump(
-                    file_name=os.path.join(new_output_path, "scores.json")
+                "scores": list(
+                    load_dump(file_name=os.path.join(new_output_path, "scores.json"))
                 ),
             },
         )
-    else:
+    return new_output_path, is_dump
+
+
+def process_results(results, main_indicator, mode, preference_budget):
+    return pd.concat(
+        [
+            results,
+            pd.DataFrame(
+                ConfDict()["scores"][-1]
+                | {
+                    "main_indicator": main_indicator,
+                    "mode": mode,
+                    "preference_budget": preference_budget,
+                }
+            ),
+        ]
+    )
+
+
+def single_objective(main_indicator="hv", mode="preferences", preference_budget=None):
+    new_output_path, is_dump = restore_results(
+        mode=mode, main_indicator=main_indicator, preference_budget=preference_budget
+    )
+    if not is_dump:
         mlp = UtilityParetoMLP(
             implementation="lcbench",
             main_indicator=main_indicator,

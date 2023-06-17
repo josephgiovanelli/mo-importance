@@ -22,6 +22,7 @@ from utils.pareto import (
     plot_pareto_from_smac,
     get_pareto_indicators,
 )
+from utils.preference_learning import get_preference_budgets
 from utils.sample import grid_search, random_search
 from utils.input import ConfDict, create_configuration
 from utils.output import (
@@ -46,25 +47,9 @@ if __name__ == "__main__":
 
     random.seed(ConfDict()["seed"])
     np.random.seed(ConfDict()["seed"])
-    n_folds = 5
-    combination_per_fold = len(
-        list(combinations(range(int(ConfDict()["random_samples"] / n_folds)), 2))
-    )
-    preference_budgets = np.linspace(
-        combination_per_fold,
-        combination_per_fold * n_folds,
-        n_folds,
-        dtype=int,
-        endpoint=True,
-    )
-    for preference_budget in preference_budgets:
-        ConfDict(
-            {
-                f"indeces_{preference_budget}": random.sample(
-                    range(combination_per_fold * n_folds), preference_budget
-                )
-            }
-        )
+
+    preference_budgets = get_preference_budgets()
+
     for main_indicator in get_pareto_indicators().keys():
         for mode in ["indicators", "preferences"]:
             for preference_budget in preference_budgets:
