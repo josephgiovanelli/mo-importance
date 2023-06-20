@@ -1,6 +1,7 @@
 # %%
 from __future__ import annotations
 from itertools import combinations
+import logging
 import os
 import time
 import random
@@ -34,8 +35,9 @@ from utils.output import (
     update_config,
 )
 
-__copyright__ = "Copyright 2021, AutoML.org Freiburg-Hannover"
-__license__ = "3-clause BSD"
+
+logger = logging.getLogger()
+logger.disabled = True
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 # %%
 from __future__ import annotations
 from itertools import combinations
+import logging
 import os
 import time
 import random
@@ -40,8 +41,9 @@ from utils.output import (
     update_config,
 )
 
-__copyright__ = "Copyright 2021, AutoML.org Freiburg-Hannover"
-__license__ = "3-clause BSD"
+
+logger = logging.getLogger()
+logger.disabled = True
 
 
 if __name__ == "__main__":
@@ -92,14 +94,15 @@ if __name__ == "__main__":
         os.path.join(ConfDict()["output_folder"], "results.csv"), index=False
     )
 
-    def get_element_from_results(
-        preference_budget, main_indicator, second_indicator, mode
-    ):
+    def get_element_from_results(preference_budget, column, row, mode):
         return round(
             results.loc[
-                (results["second_indicator"] == second_indicator)
+                (results["second_indicator"] == column)
                 & (results["preference_budget"] == preference_budget)
-                & (results["main_indicator"] == main_indicator)
+                & (
+                    results["main_indicator"]
+                    == (column if mode == "preferences" else row)
+                )
                 & (results["mode"] == mode),
                 "preferences",
             ].values[0],
@@ -109,18 +112,18 @@ if __name__ == "__main__":
     per_budget_results = {
         preference_budget: pd.concat(
             [
-                pd.DataFrame({"preferences\indicators": indicators}),
+                pd.DataFrame({"indicators\preferences": indicators}),
                 pd.concat(
                     [
                         pd.DataFrame(
                             {
-                                main_indicator: [
-                                    f"""{get_element_from_results(preference_budget, main_indicator, second_indicator, "preferences")}\{get_element_from_results(preference_budget, main_indicator, second_indicator, "indicators")}"""
-                                    for second_indicator in indicators
+                                column: [
+                                    f"""{get_element_from_results(preference_budget, column, row, "indicators")}\{get_element_from_results(preference_budget, column, row, "preferences")}"""
+                                    for row in indicators
                                 ]
                             }
                         )
-                        for main_indicator in indicators
+                        for column in indicators
                     ],
                     axis=1,
                 ),
@@ -131,6 +134,6 @@ if __name__ == "__main__":
     }
     for k, v in per_budget_results.items():
         v.to_csv(
-            os.path.join(ConfDict()["output_folder"], f"budge_{k}.csv"), index=False
+            os.path.join(ConfDict()["output_folder"], f"budget_{k}.csv"), index=False
         )
 # %%

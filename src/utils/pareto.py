@@ -98,6 +98,7 @@ def get_pareto_from_history(history: list[dict]):
 
 def encode_pareto(paretos):
     encoded_paretos = []
+    flatten_paretos = []
     for history in paretos:
         pareto_dict = get_pareto_from_history(history)
         pareto_list = [
@@ -109,7 +110,8 @@ def encode_pareto(paretos):
         encoded_paretos.append(
             pd.DataFrame(pareto_list).ffill().bfill().values.tolist()
         )
-    return encoded_paretos
+        flatten_paretos.append(pareto_dict["costs"].tolist())
+    return flatten_paretos, encoded_paretos
 
 
 def get_pareto_from_smac(smac: AbstractFacade, incumbents: list[Configuration]) -> None:
@@ -188,6 +190,8 @@ def plot_pareto(summary, output_path, title):
     ax.set_ylabel(ConfDict()["obj_metrics"][1])
     ax.legend()
     fig.savefig(output_path)
+
+    plt.close()
 
 
 def plot_pareto_from_history(history: list[dict], output_path, title):

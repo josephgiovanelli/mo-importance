@@ -32,3 +32,16 @@ def check_for_bool(p: str) -> bool:
         return True
     else:
         raise ValueError("%s is not a bool" % str(p))
+
+
+def get_tuning_datasets():
+    return [
+        f"green_{elem}.json"
+        for elem in sorted(
+            [
+                int((p.split(".")[0]).split("_")[1])
+                for p in os.listdir(os.path.join("/", "home", "input"))
+                if ".json" in p
+            ]
+        )
+    ][:3]

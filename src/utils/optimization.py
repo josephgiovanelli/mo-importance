@@ -216,6 +216,7 @@ def single_objective(main_indicator="hv", mode="preferences", preference_budget=
         cost = smac.validate(incumbent)
         print("---", cost)
 
+        flatten, encoded = encode_pareto(ConfDict()["paretos"])
         save_paretos(
             ConfDict()["paretos"],
             new_output_path,
@@ -227,9 +228,14 @@ def single_objective(main_indicator="hv", mode="preferences", preference_budget=
             "scores",
         )
         save_paretos(
-            encode_pareto(ConfDict()["paretos"]),
+            encode_pareto(encoded),
             new_output_path,
             "encoded",
+        )
+        save_paretos(
+            encode_pareto(flatten),
+            new_output_path,
+            "flatten",
         )
 
     # print(f"Optimization time: {time.time() - start_time}")

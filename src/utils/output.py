@@ -29,7 +29,7 @@ def adapt_paretos(paretos):
 def adapt_encoded(paretos):
     for obj_idx in range(len(ConfDict()["objectives"])):
         if ConfDict()["obj_modes"][obj_idx] == "max":
-            for key, pareto in paretos.items():
+            for _, pareto in paretos.items():
                 for conf in pareto:
                     conf[obj_idx] = adapt_to_mode(
                         conf[obj_idx],
@@ -114,8 +114,8 @@ def load_dump(file_name="dump.json"):
     return load_json_file(os.path.join(ConfDict()["output_folder"], file_name)).values()
 
 
-def load_encoded(path):
-    return load_json_file(os.path.join(path, "encoded.json"))
+def load_encoded(path, file_name="encoded.json"):
+    return load_json_file(os.path.join(path, file_name))
 
 
 def load_preferences(path):

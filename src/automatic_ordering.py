@@ -1,5 +1,6 @@
 # %%
 from collections import ChainMap
+import logging
 import random
 import os
 
@@ -30,6 +31,10 @@ from utils.output import (
 from utils.pareto import get_pareto_indicators
 
 
+logger = logging.getLogger()
+logger.disabled = True
+
+
 def rSubset(arr, r):
     # return list of all subsets of length r
     # to deal with duplicate subsets use
@@ -43,12 +48,12 @@ if __name__ == "__main__":
 
     random.seed(ConfDict()["seed"])
 
-    encoded = load_encoded(ConfDict()["output_folder"])
+    flatten = load_encoded(path=ConfDict()["output_folder"], file_name="flatten.json")
     combinations = np.array(
         [
             rSubset(fold, 2)
             for _, fold in KFold(n_splits=5, random_state=ConfDict()["seed"]).split(
-                list(encoded.keys())
+                list(flatten.keys())
             )
         ]
     )
@@ -56,7 +61,7 @@ if __name__ == "__main__":
     tot = len(combinations)
     # random.shuffle(combinations)
 
-    paretos = adapt_encoded(load_encoded(ConfDict()["output_folder"]))
+    paretos = adapt_encoded(flatten)
     indicators = get_pareto_indicators()
 
     preferences = pd.DataFrame()

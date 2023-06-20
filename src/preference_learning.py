@@ -11,7 +11,7 @@ import pandas as pd
 from smac import HyperparameterOptimizationFacade, Scenario
 
 from utils.argparse import parse_args
-from utils.common import make_dir
+from utils.common import get_tuning_datasets, make_dir
 from utils.input import ConfDict, create_configuration
 from utils.output import check_preferences
 from utils.pareto import get_pareto_indicators
@@ -19,18 +19,8 @@ from utils.pareto import get_pareto_indicators
 from utils.preference_learning import configspace, create_preference_dataset, objective
 
 
-def get_tuning_datasets():
-    return [
-        f"green_{elem}.json"
-        for elem in sorted(
-            [
-                int((p.split(".")[0]).split("_")[1])
-                for p in os.listdir(os.path.join("/", "home", "input"))
-                if ".json" in p
-            ]
-        )
-    ][:3]
-
+logger = logging.getLogger()
+logger.disabled = True
 
 if __name__ == "__main__":
     datasets = get_tuning_datasets()
@@ -39,9 +29,6 @@ if __name__ == "__main__":
 
     random.seed(ConfDict()["seed"])
     np.random.seed(ConfDict()["seed"])
-
-    logging.basicConfig(level=logging.CRITICAL)
-    logging.getLogger().setLevel(logging.CRITICAL)
 
     incumbents = {}
     for indicator in ["hv", "sp", "ms", "r2"]:

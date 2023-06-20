@@ -1,5 +1,6 @@
 # %%
 from __future__ import annotations
+import logging
 import os
 import time
 import random
@@ -31,8 +32,8 @@ from utils.output import (
     save_config,
 )
 
-__copyright__ = "Copyright 2021, AutoML.org Freiburg-Hannover"
-__license__ = "3-clause BSD"
+logger = logging.getLogger()
+logger.disabled = True
 
 
 if __name__ == "__main__":
@@ -73,7 +74,9 @@ if __name__ == "__main__":
                 title=ConfDict()["task"],
             )
 
-    save_paretos(encode_pareto(paretos), ConfDict()["output_folder"], "encoded")
+    flatten, encoded = encode_pareto(paretos)
+    save_paretos(flatten, ConfDict()["output_folder"], "flatten")
+    save_paretos(encoded, ConfDict()["output_folder"], "encoded")
     save_config(args.conf_file)
 
 # %%

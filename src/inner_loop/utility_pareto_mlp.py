@@ -82,11 +82,11 @@ class UtilityParetoMLP(ParetoMLP):
         self.main_indicator = main_indicator
         self.mode = mode
 
-    def get_indicators(self, encoded):
+    def get_indicators(self, flatten):
         return {
             acronym: indicator["indicator"](
                 np.array(
-                    adapt_encoded({idx: elem for idx, elem in enumerate(encoded)})[0]
+                    adapt_encoded({idx: elem for idx, elem in enumerate(flatten)})[0]
                 )
             )
             for acronym, indicator in self.indicators_.items()
@@ -100,14 +100,15 @@ class UtilityParetoMLP(ParetoMLP):
             for acronym, model in self.preference_models_.items()
         }
 
-    def get_scores_from_encoded(self, encoded):
+    def get_scores_from_encoded(self, flatten, encoded):
         return {
-            "indicators": self.get_indicators(copy.deepcopy(encoded)),
+            "indicators": self.get_indicators(copy.deepcopy(flatten)),
             "preferences": self.get_preferences(copy.deepcopy(encoded)),
         }
 
     def get_scores(self, pareto):
-        return self.get_scores_from_encoded(encode_pareto(pareto))
+        flatten, encoded = encode_pareto(pareto)
+        return self.get_scores_from_encoded(flatten, encoded)
 
     def train(
         self,
