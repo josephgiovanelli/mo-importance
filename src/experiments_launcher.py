@@ -28,14 +28,11 @@ if __name__ == "__main__":
     print("--- PREFERENCE LEARNING ---")
     subprocess.call(f"python src/preference_learning.py", shell=True)
 
+    evaluation_confs = [elem for elem in confs if elem not in get_tuning_datasets()]
     print("--- OPTIMIZATION LOOP ---")
-    with tqdm(
-        total=len([elem for elem in confs if elem not in get_tuning_datasets()])
-    ) as pbar:
-        for conf in confs:
+    with tqdm(total=len(evaluation_confs)) as pbar:
+        for conf in evaluation_confs:
             subprocess.call(
                 f"python src/optimization.py --conf_file {conf}", shell=True
             )
-
-    print("--- COMPARISONS ---")
-    subprocess.call(f"python src/comparison.py --conf_file {conf}", shell=True)
+            subprocess.call(f"python src/comparison.py --conf_file {conf}", shell=True)
