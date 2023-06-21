@@ -25,14 +25,14 @@ logging.getLogger("matplotlib.font_manager").setLevel(logging.ERROR)
 
 
 def get_pareto_indicators():
-    ref_point, ideal_point = [0, 0], [0, 0]
-    for obj_idx in range(len(ConfDict()["objectives"])):
-        ref_point[obj_idx] = adapt_to_mode(
-            ConfDict()["objectives"][obj_idx]["upper_bound"]
-            if ConfDict()["obj_modes"][obj_idx] == "min"
-            else ConfDict()["objectives"][obj_idx]["lower_bound"],
-            ConfDict()["obj_modes"][obj_idx],
-        )
+    ref_point, ideal_point = [1, 1], [0, 0]
+    # for obj_idx in range(len(ConfDict()["objectives"])):
+    #     ref_point[obj_idx] = adapt_to_mode(
+    #         ConfDict()["objectives"][obj_idx]["upper_bound"]
+    #         if ConfDict()["obj_modes"][obj_idx] == "min"
+    #         else ConfDict()["objectives"][obj_idx]["lower_bound"],
+    #         ConfDict()["obj_modes"][obj_idx],
+    #     )
 
     return {
         "hv": {

@@ -9,7 +9,7 @@ from pymoo.vendor.hv import HyperVolume as _HyperVolume
 from performance.my_indicator import MyIndicator
 
 
-class Hypervolume(MyIndicator):
+class MyHypervolume(MyIndicator):
     def __init__(
         self,
         ref_point=None,
@@ -55,7 +55,7 @@ class Hypervolume(MyIndicator):
         return val
 
 
-class HV(Hypervolume):
+class MyHV(MyHypervolume):
     pass
 
 
