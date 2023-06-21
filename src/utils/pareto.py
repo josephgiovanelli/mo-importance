@@ -16,6 +16,7 @@ from pymoo.indicators.hv import Hypervolume
 from performance.r2 import R2
 from performance.spacing import Spacing
 from performance.spread import Spread
+from performance.my_hypervolume import MyHypervolume
 
 __copyright__ = "Copyright 2021, AutoML.org Freiburg-Hannover"
 __license__ = "3-clause BSD"
@@ -35,7 +36,7 @@ def get_pareto_indicators():
 
     return {
         "hv": {
-            "indicator": Hypervolume(ref_point=ref_point),
+            "indicator": MyHypervolume(ref_point=ref_point),
             "mode": getattr(pd.Series, "idxmax"),
         },
         "sp": {"indicator": Spacing(), "mode": getattr(pd.Series, "idxmin")},

@@ -7,13 +7,15 @@ from pymoo.indicators.distance_indicator import (
     derive_ideal_and_nadir_from_pf,
 )
 
+from performance.my_indicator import MyIndicator
+
 
 # =========================================================================================================
 # Implementation
 # =========================================================================================================
 
 
-class Spread(Indicator):
+class Spread(MyIndicator):
     def __init__(self, ideal=None, nadir=None):
         """Spread indicator
         The higher the value this indicator assumes, the most spread is the distribution of elements on the pareto front.

@@ -6,13 +6,15 @@ from pymoo.indicators.distance_indicator import (
     derive_ideal_and_nadir_from_pf,
 )
 
+from performance.my_indicator import MyIndicator
+
 
 # =========================================================================================================
 # Implementation
 # =========================================================================================================
 
 
-class Spacing(Indicator):
+class Spacing(MyIndicator):
     def __init__(
         self, metric="cityblock", pf=None, zero_to_one=False, ideal=None, nadir=None
     ):

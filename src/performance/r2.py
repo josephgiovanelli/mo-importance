@@ -8,12 +8,14 @@ from pymoo.indicators.distance_indicator import (
 
 from scipy.spatial import distance
 
+from performance.my_indicator import MyIndicator
+
 # =========================================================================================================
 # Implementation
 # =========================================================================================================
 
 
-class R2(Indicator):
+class R2(MyIndicator):
     def __init__(self, ideal=None):
         """Spacing indicator
         The smaller the value this indicator assumes, the most uniform is the distribution of elements on the pareto front.
