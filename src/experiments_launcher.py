@@ -12,6 +12,8 @@ from utils.common import get_tuning_datasets, make_dir
 
 if __name__ == "__main__":
     input_path = make_dir(os.path.join("/", "home", "input"))
+
+    print("--- SCENARIO GENERATION ---")
     subprocess.call("python src/scenario_generator.py", shell=True)
 
     confs = [p for p in os.listdir(input_path) if ".json" in p]
