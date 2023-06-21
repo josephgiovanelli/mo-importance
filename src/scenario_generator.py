@@ -16,7 +16,7 @@ template = {
     "use_case_objective": {"metric": "Power consumption (W)", "mode": "min"},
     "grid_samples": 10,
     "random_samples": 40,
-    "preference_samples": 1000,
+    "preference_samples": 500,
     "optimization_samples": 30,
     "seed": 0,
 }
