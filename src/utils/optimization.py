@@ -95,7 +95,7 @@ def multi_objective(mode="fair", preference_budget=None):
             for i in range(len(pareto_costs), 10):
                 pareto_costs.append([np.nan, np.nan])
         pareto_costs = pd.DataFrame(pareto_costs).ffill().bfill().values.tolist()
-        pareto_scores = mlp.get_scores_from_encoded([pareto_costs])
+        pareto_scores = mlp.get_scores_from_encoded([pareto_costs], [pareto_costs])
 
         ConfDict({"paretos": ConfDict()["paretos"] + [pareto_costs]})
         ConfDict({"scores": ConfDict()["scores"] + [pareto_scores]})
@@ -228,12 +228,12 @@ def single_objective(main_indicator="hv", mode="preferences", preference_budget=
             "scores",
         )
         save_paretos(
-            encode_pareto(encoded),
+            encoded,
             new_output_path,
             "encoded",
         )
         save_paretos(
-            encode_pareto(flatten),
+            flatten,
             new_output_path,
             "flatten",
         )
