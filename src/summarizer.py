@@ -115,6 +115,7 @@ if __name__ == "__main__":
                 summary_path,
                 f"budget_{k}.csv",
             ),
+            ),
             index=False,
         )
 # %%

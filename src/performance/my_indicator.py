@@ -34,7 +34,7 @@ class MyIndicator(Indicator):
             np.array(
                 [
                     [
-                        f[idx] / ConfDict()["objectives"][idx]["upper_bound"]
+                        f[idx] / max(1, ConfDict()["objectives"][idx]["upper_bound"])
                         for idx in range(len(f))
                     ]
                     for f in F

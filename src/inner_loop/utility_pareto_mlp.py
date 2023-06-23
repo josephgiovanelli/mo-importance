@@ -83,12 +83,11 @@ class UtilityParetoMLP(ParetoMLP):
         self.mode = mode
 
     def get_indicators(self, flatten):
+        new_flatten = np.array(
+            adapt_encoded({idx: elem for idx, elem in enumerate(flatten)})[0]
+        )
         return {
-            acronym: indicator["indicator"](
-                np.array(
-                    adapt_encoded({idx: elem for idx, elem in enumerate(flatten)})[0]
-                )
-            )
+            acronym: indicator["indicator"](new_flatten)
             for acronym, indicator in self.indicators_.items()
         }
 
