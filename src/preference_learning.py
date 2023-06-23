@@ -19,9 +19,6 @@ from utils.pareto import get_pareto_indicators
 from utils.preference_learning import configspace, create_preference_dataset, objective
 
 
-logger = logging.getLogger()
-logger.disabled = True
-
 if __name__ == "__main__":
     datasets = get_tuning_datasets()
     create_configuration(datasets)

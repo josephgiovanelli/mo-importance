@@ -36,10 +36,6 @@ from utils.output import (
 )
 
 
-logger = logging.getLogger()
-logger.disabled = True
-
-
 if __name__ == "__main__":
     args, _ = parse_args()
     create_configuration(
