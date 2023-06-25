@@ -15,6 +15,7 @@ from smac.model.random_model import RandomModel
 
 from utils.argparse import parse_args
 from utils.common import make_dir
+from utils.comparison import get_cell_value
 from utils.dataset import load_dataset_from_openml
 from utils.optimization import (
     multi_objective,
@@ -63,51 +64,56 @@ if __name__ == "__main__":
     for main_indicator in indicators:
         for mode in ["indicators", "preferences"]:
             for preference_budget in preference_budgets:
-                new_output_path, is_dump = restore_results(
-                    main_indicator=main_indicator,
-                    mode=mode,
-                    preference_budget=preference_budget,
-                )
-                results = process_results(
-                    results,
-                    main_indicator=main_indicator,
-                    mode=mode,
-                    preference_budget=preference_budget,
-                )
-    for mode in ["fair", "unfair"]:
-        for preference_budget in preference_budgets:
-            new_output_path, is_dump = restore_results(
-                main_indicator=None,
-                mode=mode,
-                preference_budget=preference_budget,
-            )
-            results = process_results(
-                results,
-                main_indicator=main_indicator,
-                mode=mode,
-                preference_budget=preference_budget,
-            )
+                for seed in [0, 1, 42]:
+                    new_output_path, is_dump = restore_results(
+                        main_indicator=main_indicator,
+                        mode=mode,
+                        preference_budget=preference_budget,
+                        seed=seed,
+                    )
+                    results = process_results(
+                        results,
+                        main_indicator=main_indicator,
+                        mode=mode,
+                        preference_budget=preference_budget,
+                        seed=seed,
+                    )
+    # for mode in ["fair", "unfair"]:
+    #     for preference_budget in preference_budgets:
+    #         new_output_path, is_dump = restore_results(
+    #             main_indicator=None,
+    #             mode=mode,
+    #             preference_budget=preference_budget,
+    #         )
+    #         results = process_results(
+    #             results,
+    #             main_indicator=main_indicator,
+    #             mode=mode,
+    #             preference_budget=preference_budget,
+    #         )
     results = results.reset_index(inplace=False).rename(
         columns={"index": "second_indicator"}
     )
     results.to_csv(
+        os.path.join(ConfDict()["output_folder"], "results_raw.csv"), index=False
+    )
+    results = (
+        results.groupby(
+            ["main_indicator", "second_indicator", "preference_budget", "mode"]
+        )
+        .agg(
+            {
+                "indicators": ["mean", "std"],
+                "preferences": ["mean", "std"],
+                "seed": lambda x: " ".join(str(x.values)),
+            }
+        )
+        .reset_index()
+    )
+    results.columns = [" ".join(col).strip() for col in results.columns.values]
+    results.to_csv(
         os.path.join(ConfDict()["output_folder"], "results.csv"), index=False
     )
-
-    def get_element_from_results(preference_budget, column, row, mode):
-        return round(
-            results.loc[
-                (results["second_indicator"] == column)
-                & (results["preference_budget"] == preference_budget)
-                & (
-                    results["main_indicator"]
-                    == (column if mode == "preferences" else row)
-                )
-                & (results["mode"] == mode),
-                "preferences",
-            ].values[0],
-            2,
-        )
 
     per_budget_results = {
         preference_budget: pd.concat(
@@ -118,7 +124,7 @@ if __name__ == "__main__":
                         pd.DataFrame(
                             {
                                 column: [
-                                    f"""{get_element_from_results(preference_budget, column, row, "indicators")}\{get_element_from_results(preference_budget, column, row, "preferences")}"""
+                                    f"{get_cell_value(results, preference_budget, column, row)}"
                                     for row in indicators
                                 ]
                             }

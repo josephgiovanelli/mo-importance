@@ -15,6 +15,7 @@ from smac.model.random_model import RandomModel
 
 from utils.argparse import parse_args
 from utils.common import get_tuning_datasets, make_dir
+from utils.comparison import get_cell_value, get_element_from_results
 from utils.dataset import load_dataset_from_openml
 from utils.optimization import (
     multi_objective,
@@ -49,7 +50,7 @@ logger.disabled = True
 if __name__ == "__main__":
     input_path = make_dir(os.path.join("/", "home", "input"))
     confs = [p for p in os.listdir(input_path) if ".json" in p]
-    datasets = [elem for elem in confs if elem not in get_tuning_datasets()]
+    datasets = [elem for elem in confs if elem not in get_tuning_datasets()][:2]
     create_configuration(file_name=datasets, origin="optimization")
 
     random.seed(ConfDict()["seed"])
@@ -69,23 +70,32 @@ if __name__ == "__main__":
     )
 
     summary_path = make_dir(os.path.join("/", "home", "output", "summary"))
+    results.to_csv(os.path.join(summary_path, "results_raw.csv"), index=False)
+
+    results = results[
+        [
+            "main_indicator",
+            "second_indicator",
+            "preference_budget",
+            "mode",
+            "preferences mean",
+            "indicators mean",
+        ]
+    ]
+    results = (
+        results.groupby(
+            ["main_indicator", "second_indicator", "preference_budget", "mode"]
+        )
+        .agg(["mean", "std"])
+        .reset_index()
+    )
+    results.columns = [" ".join(col).strip() for col in results.columns.values]
+    results.columns = [
+        col if " " not in col else f"""{col.split(" ")[0]} {col.split(" ")[2]}"""
+        for col in results.columns.values
+    ]
     results.to_csv(os.path.join(summary_path, "results.csv"), index=False)
 
-    def get_element_from_results(preference_budget, column, row, mode):
-        return round(
-            results.loc[
-                (results["second_indicator"] == column)
-                & (results["preference_budget"] == preference_budget)
-                & (
-                    results["main_indicator"]
-                    == (column if mode == "preferences" else row)
-                )
-                & (results["mode"] == mode),
-                "preferences",
-            ].mean(),
-            2,
-        )
-
     per_budget_results = {
         preference_budget: pd.concat(
             [
@@ -95,7 +105,7 @@ if __name__ == "__main__":
                         pd.DataFrame(
                             {
                                 column: [
-                                    f"""{get_element_from_results(preference_budget, column, row, "indicators")}\{get_element_from_results(preference_budget, column, row, "preferences")}"""
+                                    f"{get_cell_value(results, preference_budget, column, row)}"
                                     for row in indicators
                                 ]
                             }
@@ -113,54 +123,7 @@ if __name__ == "__main__":
         v.to_csv(
             os.path.join(
                 summary_path,
-                f"budget_{k}_mean.csv",
-            ),
-            index=False,
-        )
-
-    def get_element_from_results_std(preference_budget, column, row, mode):
-        return round(
-            results.loc[
-                (results["second_indicator"] == column)
-                & (results["preference_budget"] == preference_budget)
-                & (
-                    results["main_indicator"]
-                    == (column if mode == "preferences" else row)
-                )
-                & (results["mode"] == mode),
-                "preferences",
-            ].std(),
-            2,
-        )
-
-    per_budget_results = {
-        preference_budget: pd.concat(
-            [
-                pd.DataFrame({"indicators\preferences": indicators}),
-                pd.concat(
-                    [
-                        pd.DataFrame(
-                            {
-                                column: [
-                                    f"""{get_element_from_results_std(preference_budget, column, row, "indicators")}\{get_element_from_results_std(preference_budget, column, row, "preferences")}"""
-                                    for row in indicators
-                                ]
-                            }
-                        )
-                        for column in indicators
-                    ],
-                    axis=1,
-                ),
-            ],
-            axis=1,
-        )
-        for preference_budget in preference_budgets
-    }
-    for k, v in per_budget_results.items():
-        v.to_csv(
-            os.path.join(
-                summary_path,
-                f"budget_{k}_std.csv",
+                f"budget_{k}.csv",
             ),
             index=False,
         )

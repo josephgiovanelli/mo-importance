@@ -76,7 +76,7 @@ class LCBenchModel:
         with warnings.catch_warnings():
             value = config.get_dictionary()
             # value["epoch"] = int(np.ceil(budget))
-            results_list = self.bench.objective_function(value, seed=ConfDict()["seed"])
+            results_list = self.bench.objective_function(value, seed=seed)
             if ConfDict()["use_case"] == "green_automl":
                 use_case_dict = {
                     f"""{ConfDict()["use_case_objective"]["metric"]}""": adapt_to_mode(

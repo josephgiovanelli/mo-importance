@@ -123,12 +123,12 @@ def multi_objective(mode="fair", preference_budget=None):
             )
 
 
-def restore_results(mode, main_indicator, preference_budget):
+def restore_results(mode, main_indicator, preference_budget, seed):
     new_output_path = make_dir(
         os.path.join(
             ConfDict()["output_folder"],
             *(
-                [mode, main_indicator]
+                [mode, main_indicator, str(seed)]
                 if main_indicator != None
                 else [f"multi_objective_{mode}"]
             ),
@@ -153,7 +153,7 @@ def restore_results(mode, main_indicator, preference_budget):
     return new_output_path, is_dump
 
 
-def process_results(results, main_indicator, mode, preference_budget):
+def process_results(results, main_indicator, mode, preference_budget, seed):
     return pd.concat(
         [
             results,
@@ -163,15 +163,21 @@ def process_results(results, main_indicator, mode, preference_budget):
                     "main_indicator": main_indicator,
                     "mode": mode,
                     "preference_budget": preference_budget,
+                    "seed": seed,
                 }
             ),
         ]
     )
 
 
-def single_objective(main_indicator="hv", mode="preferences", preference_budget=None):
+def single_objective(
+    main_indicator="hv", mode="preferences", preference_budget=None, seed=0
+):
     new_output_path, is_dump = restore_results(
-        mode=mode, main_indicator=main_indicator, preference_budget=preference_budget
+        mode=mode,
+        main_indicator=main_indicator,
+        preference_budget=preference_budget,
+        seed=seed,
     )
     if not is_dump:
         mlp = UtilityParetoMLP(
@@ -188,13 +194,13 @@ def single_objective(main_indicator="hv", mode="preferences", preference_budget=
         scenario = Scenario(
             mlp.configspace,
             n_trials=ConfDict()["optimization_samples"],
-            seed=ConfDict()["seed"],
+            seed=seed,
             n_workers=1,
         )
 
         # We want to run five random configurations before starting the optimization.
         initial_design = HPOFacade.get_initial_design(scenario, n_configs=5)
-        intensifier = HPOFacade.get_intensifier(scenario, max_config_calls=1)
+        intensifier = HPOFacade.get_intensifier(scenario, max_config_calls=3)
 
         # Create our SMAC object and pass the scenario and the train method
         smac = HPOFacade(

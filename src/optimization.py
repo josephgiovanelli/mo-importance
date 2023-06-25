@@ -51,14 +51,16 @@ if __name__ == "__main__":
     for main_indicator in get_pareto_indicators().keys():
         for mode in ["indicators", "preferences"]:
             for preference_budget in preference_budgets:
-                single_objective(
-                    main_indicator=main_indicator,
-                    mode=mode,
-                    preference_budget=preference_budget,
-                )
-    for mode in ["fair", "unfair"]:
-        for preference_budget in preference_budgets:
-            multi_objective(mode=mode, preference_budget=preference_budget)
+                for seed in [0, 1, 42]:
+                    single_objective(
+                        main_indicator=main_indicator,
+                        mode=mode,
+                        preference_budget=preference_budget,
+                        seed=seed,
+                    )
+    # for mode in ["fair", "unfair"]:
+    #     for preference_budget in preference_budgets:
+    #         multi_objective(mode=mode, preference_budget=preference_budget)
 
 
 # %%
