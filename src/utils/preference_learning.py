@@ -22,7 +22,7 @@ from ConfigSpace.hyperparameters import (
 )
 
 from ranker.my_rank_svc import MyRankSVM
-
+from scipy.stats import kendalltau
 from utils.common import make_dir
 from utils.input import ConfDict
 from utils.output import (
@@ -192,6 +192,93 @@ def compute_raw_results(config_dict, result_dict, dataset, mode, seed):
                 )
             ),
             f"""predictions_{ConfDict()["indicators"][ConfDict()["current_indicator"]]["iteration"]}.csv""",
+        ),
+        index=False,
+    )
+
+
+def get_index_of(my_list):
+    return sorted(range(len(my_list)), key=lambda k: my_list[k])
+
+
+def evaluate_model(config_dict, result_dict, dataset, mode, seed):
+    splits = KFold(n_splits=5, random_state=ConfDict()["seed"]).split(
+        ConfDict()[dataset]["X"]
+    )
+
+    raw_results = []
+    for idx, (train, _) in enumerate(splits):
+        i_shuffle = int(mode.split("_")[-1])
+        fate = MyRankSVM(**config_dict, random_state=seed)
+        random.seed(seed)
+        new_train = random.sample(list(train), 28 * i_shuffle)
+        fate.fit(
+            ConfDict()[dataset]["X"][new_train].copy(),
+            ConfDict()[dataset]["Y"][new_train].copy(),
+        )
+        min_i = min(ConfDict()[dataset]["test_folds"][idx])
+        y_true = (
+            get_index_of(
+                [
+                    ConfDict()[dataset]["scores"][
+                        f"""{ConfDict()["current_indicator"]}_{i}"""
+                    ]
+                    for i in ConfDict()[dataset]["test_folds"][idx]
+                ]
+            )
+            + min_i
+        )
+        if ConfDict()["current_indicator"] in ["hv", "ms"]:
+            y_true = y_true[::-1]
+        else:
+            y_true = y_true
+
+        y_pred = (
+            get_index_of(
+                fate.predict_scores(
+                    np.array(
+                        [
+                            [
+                                ConfDict()[dataset]["flatten_encoded"][str(i)].copy()
+                                for i in ConfDict()[dataset]["test_folds"][idx]
+                            ]
+                        ]
+                    )
+                )[0]
+            )
+            + min_i
+        )[::-1]
+        corr, alpha = kendalltau(y_true, y_pred)
+
+        raw_results.append(
+            pd.DataFrame(
+                {
+                    "y_true": y_true,
+                    "y_pred": y_pred,
+                    "corr": corr,
+                    "alpha": alpha,
+                }
+            )
+        )
+    # for metric in ["corr", "alpha"]:
+    #     for aggregation in ["mean", "std"]:
+    #         values = [result[metric] for result in raw_results]
+    #         result_dict[f"{mode}_{metric}_{aggregation}"] = round(
+    #             np.mean(values) if aggregation == "mean" else np.std(values), 2
+    #         )
+    result_dict[mode].append(
+        round(np.mean([result["corr"] for result in raw_results]), 2)
+    )
+    pd.concat(raw_results, ignore_index=True).to_csv(
+        os.path.join(
+            make_dir(
+                os.path.join(
+                    ConfDict()[dataset]["output_folder"],
+                    ConfDict()["current_indicator"],
+                    f"eval_{mode}",
+                )
+            ),
+            f"metrics.csv",
         ),
         index=False,
     )

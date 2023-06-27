@@ -113,3 +113,6 @@ class MyRankSVM(ObjectRanker, MyPairwiseSVM):
             0 if (preference == np.array([0, 1])).all() else 1
             for preference in super().predict(X, **kwargs)
         ]
+
+    def super_predict(self, X, **kwargs):
+        return super().predict(X, **kwargs)
