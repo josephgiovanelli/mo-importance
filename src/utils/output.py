@@ -66,6 +66,11 @@ def save_preferences(preferences):
     )
 
 
+def save_preference_scores(scores):
+    with open(os.path.join(ConfDict()["output_folder"], "scores.json"), "w") as f:
+        json.dump(scores, f)
+
+
 def save_config(file_name):
     ConfDict()["output_folder"] = file_name.split(".")[0]
     with open(os.path.join("/", "home", "input", file_name), "w") as f:

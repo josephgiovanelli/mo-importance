@@ -24,6 +24,7 @@ from utils.output import (
     load_encoded,
     check_preferences,
     load_preferences,
+    save_preference_scores,
     save_preferences,
     adapt_to_mode,
     adapt_encoded,
@@ -64,18 +65,25 @@ if __name__ == "__main__":
     paretos = adapt_encoded(flatten)
     indicators = get_pareto_indicators()
 
+    single_scores = {
+        f"{acronym}_{idx}": indicator["indicator"](np.array(pareto))
+        for idx, pareto in paretos.items()
+        for acronym, indicator in indicators.items()
+    }
+    save_preference_scores(single_scores)
+
     preferences = pd.DataFrame()
 
     for pair in combinations:
         scores = [
             {
                 f"pair_{idx}": pair[idx],
-                f"score_{idx}_{acronym}": indicator["indicator"](pareto),
+                f"score_{idx}_{acronym}": single_scores[f"{acronym}_{pair[idx]}"],
             }
             for idx, pareto in enumerate(
                 [np.array(paretos[str(elem)]) for elem in pair]
             )
-            for acronym, indicator in indicators.items()
+            for acronym in indicators.keys()
         ]
         scores = dict(ChainMap(*scores))
 
@@ -108,5 +116,6 @@ if __name__ == "__main__":
             ignore_index=True,
         )
         save_preferences(preferences)
+    preferences[["pair_0"]]
 
 # %%
