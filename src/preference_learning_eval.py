@@ -21,6 +21,7 @@ from utils.preference_learning import (
     configspace,
     create_preference_dataset,
     objective,
+    objective_kendall,
     evaluate_model,
 )
 
@@ -36,7 +37,6 @@ if __name__ == "__main__":
 
     incumbents = {}
     indicators = ["hv", "sp", "ms", "r2"]
-    ConfDict()["summary"] = pd.DataFrame()
     for indicator in indicators:
         for dataset in datasets:
             if check_preferences(
@@ -73,59 +73,78 @@ if __name__ == "__main__":
                         )
                     ]
                 )
-                ConfDict()[dataset]["config_dicts"] = load_json_file(
-                    os.path.join("/", "home", "output", "preference", "incumbent.json")
-                )
                 ConfDict()[dataset]["preferences"] = preferences[
                     ["pair_0", "pair_1"]
                 ].to_numpy()
                 ConfDict()["current_indicator"] = indicator
+                ConfDict()["indicators"][indicator] = {
+                    "iteration": 0,
+                    "summary": pd.DataFrame(),
+                }
 
             else:
                 raise Exception(f"No preference file found for {dataset}")
 
-        config_dict = ConfDict()[dataset]["config_dicts"][
-            ConfDict()["current_indicator"]
-        ]
-        result_dict = {
-            "cross_validation_1": [],
-            "cross_validation_2": [],
-            "cross_validation_3": [],
-            "cross_validation_4": [],
-        }
-        for seed in [0, 1, 42]:
-            for dataset in ConfDict()["datasets"]:
-                for mode in result_dict.keys():
-                    evaluate_model(config_dict, result_dict, dataset, mode, seed)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore")
 
-        ConfDict()["summary"] = pd.concat(
-            [
-                ConfDict()["summary"],
-                pd.DataFrame(
-                    {
-                        **{"indicator": [indicator]},
-                        **{key: [value] for key, value in result_dict.items()},
-                        **{
-                            f"{key}_mean": [np.mean(value)]
-                            for key, value in result_dict.items()
-                        },
-                        **{
-                            f"{key}_std": [np.std(value)]
-                            for key, value in result_dict.items()
-                        },
-                    }
+            # Next, we create an object, holding general information about the run
+            scenario = Scenario(
+                configspace(),
+                n_trials=ConfDict()["preference_samples"],
+                seed=ConfDict()["seed"],
+                n_workers=1,
+            )
+
+            # We want to run the facade's default initial design, but we want to change the number
+            # of initial configs to 5.
+            initial_design = HyperparameterOptimizationFacade.get_initial_design(
+                scenario, n_configs=50
+            )
+            intensifier = HyperparameterOptimizationFacade.get_intensifier(
+                scenario, max_config_calls=3
+            )
+
+            # Now we use SMAC to find the best hyperparameters
+            smac = HyperparameterOptimizationFacade(
+                scenario,
+                objective_kendall,
+                initial_design=initial_design,
+                intensifier=intensifier,
+                overwrite=True,  # If the run exists, we overwrite it; alternatively, we can continue from last state
+            )
+
+            incumbent = smac.optimize()
+
+            # Get cost of default configuration
+            default_cost = smac.validate(configspace().get_default_configuration())
+            print(f"Default cost: {default_cost}")
+
+            # Let's calculate the cost of the incumbent
+            incumbent_cost = smac.validate(incumbent)
+            print(f"Incumbent cost: {incumbent_cost}")
+
+            incumbents[indicator] = incumbent.get_dictionary()
+
+            ConfDict()["indicators"][indicator]["summary"].to_csv(
+                os.path.join(
+                    make_dir(
+                        os.path.join("/", "home", "output", "preference"),
+                    ),
+                    f"{indicator}.csv",
                 ),
-            ],
-            ignore_index=True,
-        )
+                index=False,
+            )
 
-    ConfDict()["summary"].to_csv(
+    with open(
         os.path.join(
-            make_dir(
-                os.path.join("/", "home", "output", "preference"),
-            ),
-            f"model_evaluation.csv",
+            "/",
+            "home",
+            "output",
+            "preference",
+            "incumbent.json",
         ),
-        index=False,
-    )
+        "w",
+    ) as f:
+        json.dump(incumbents, f)
 # %%

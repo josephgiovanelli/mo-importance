@@ -206,8 +206,8 @@ def evaluate_model(config_dict, result_dict, dataset, mode, seed):
         ConfDict()[dataset]["X"]
     )
 
-    raw_results = []
-    for idx, (train, _) in enumerate(splits):
+    raw_results, raw_results_pair = [], []
+    for idx, (train, test) in enumerate(splits):
         i_shuffle = int(mode.split("_")[-1])
         fate = MyRankSVM(**config_dict, random_state=seed)
         random.seed(seed)
@@ -260,6 +260,39 @@ def evaluate_model(config_dict, result_dict, dataset, mode, seed):
                 }
             )
         )
+
+        raw_results_pair.append(
+            pd.DataFrame(
+                {
+                    "pair_0": [
+                        pref[0] for pref in ConfDict()[dataset]["preferences"][test]
+                    ],
+                    "pair_0_score": [
+                        elem
+                        for list in fate.predict_scores(
+                            np.array(
+                                [[elem[0]] for elem in ConfDict()[dataset]["X"][test]]
+                            )
+                        )
+                        for elem in list
+                    ],
+                    "pair_1": [
+                        pref[1] for pref in ConfDict()[dataset]["preferences"][test]
+                    ],
+                    "pair_1_score": [
+                        elem
+                        for list in fate.predict_scores(
+                            np.array(
+                                [[elem[1]] for elem in ConfDict()[dataset]["X"][test]]
+                            )
+                        )
+                        for elem in list
+                    ],
+                    "y_true": ConfDict()[dataset]["Y"][test],
+                    "y_pred": fate.predict(ConfDict()[dataset]["X"][test].copy()),
+                }
+            )
+        )
     # for metric in ["corr", "alpha"]:
     #     for aggregation in ["mean", "std"]:
     #         values = [result[metric] for result in raw_results]
@@ -269,16 +302,31 @@ def evaluate_model(config_dict, result_dict, dataset, mode, seed):
     result_dict[mode].append(
         round(np.mean([result["corr"] for result in raw_results]), 2)
     )
+
     pd.concat(raw_results, ignore_index=True).to_csv(
         os.path.join(
             make_dir(
                 os.path.join(
                     ConfDict()[dataset]["output_folder"],
                     ConfDict()["current_indicator"],
-                    f"eval_{mode}",
+                    f"{mode}",
                 )
             ),
-            f"metrics.csv",
+            f"""predictions_{ConfDict()["indicators"][ConfDict()["current_indicator"]]["iteration"]}.csv""",
+        ),
+        index=False,
+    )
+
+    pd.concat(raw_results_pair, ignore_index=True).to_csv(
+        os.path.join(
+            make_dir(
+                os.path.join(
+                    ConfDict()[dataset]["output_folder"],
+                    ConfDict()["current_indicator"],
+                    f"{mode}",
+                )
+            ),
+            f"""predictions_pair_{ConfDict()["indicators"][ConfDict()["current_indicator"]]["iteration"]}.csv""",
         ),
         index=False,
     )
@@ -319,6 +367,54 @@ def objective(config: Configuration, seed: int = 0) -> float:
         ignore_index=True,
     )
 
+    ConfDict()["indicators"][ConfDict()["current_indicator"]]["iteration"] += 1
+
+    return 1 - np.mean(result_dict["cross_validation_4"])
+
+
+def objective_kendall(config: Configuration, seed: int = 0) -> float:
+    config_dict = config.get_dictionary()
+    result_dict = {
+        "iteration": ConfDict()["indicators"][ConfDict()["current_indicator"]][
+            "iteration"
+        ],
+        "cross_validation_1": [],
+        "cross_validation_2": [],
+        "cross_validation_3": [],
+        "cross_validation_4": [],
+    }
+
+    try:
+        for dataset in ConfDict()["datasets"]:
+            for mode in result_dict.keys():
+                if mode != "iteration":
+                    evaluate_model(config_dict, result_dict, dataset, mode, seed)
+
+        log = "success"
+    except Exception as e:
+        log = e
+
+    ConfDict()["indicators"][ConfDict()["current_indicator"]]["summary"] = pd.concat(
+        [
+            ConfDict()["indicators"][ConfDict()["current_indicator"]]["summary"],
+            pd.DataFrame(
+                {
+                    **{key: [value] for key, value in result_dict.items()},
+                    **{
+                        f"{key}_mean": [np.mean(value)]
+                        for key, value in result_dict.items()
+                    },
+                    **{
+                        f"{key}_std": [np.std(value)]
+                        for key, value in result_dict.items()
+                    },
+                    **{key: [value] for key, value in config_dict.items()},
+                    **{"log": [log]},
+                }
+            ),
+        ],
+        ignore_index=True,
+    )
     ConfDict()["indicators"][ConfDict()["current_indicator"]]["iteration"] += 1
 
     return 1 - np.mean(result_dict["cross_validation_4"])

@@ -138,6 +138,7 @@ smac3_output
 # custom output
 input
 input_old
+new_output
 output
 output_old
 output_older
