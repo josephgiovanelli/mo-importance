@@ -197,8 +197,8 @@ def compute_raw_results(config_dict, result_dict, dataset, mode, seed):
     )
 
 
-def get_index_of(my_list):
-    return sorted(range(len(my_list)), key=lambda k: my_list[k])
+def get_index_of(my_list, reverse):
+    return [sorted(my_list, reverse=reverse).index(elem) for elem in my_list]
 
 
 def evaluate_model(config_dict, result_dict, dataset, mode, seed):
@@ -216,38 +216,49 @@ def evaluate_model(config_dict, result_dict, dataset, mode, seed):
             ConfDict()[dataset]["X"][new_train].copy(),
             ConfDict()[dataset]["Y"][new_train].copy(),
         )
-        min_i = min(ConfDict()[dataset]["test_folds"][idx])
-        y_true = (
-            get_index_of(
+        # min_i = min(ConfDict()[dataset]["test_folds"][idx])
+        # y_true = (
+        #     get_index_of(
+        #         [
+        #             ConfDict()[dataset]["scores"][
+        #                 f"""{ConfDict()["current_indicator"]}_{i}"""
+        #             ]
+        #             for i in ConfDict()[dataset]["test_folds"][idx]
+        #         ]
+        #     )
+        #     + min_i
+        # )
+        y_true = get_index_of(
+            ConfDict()["indicators"][ConfDict()["current_indicator"]][
+                "binnerizer"
+            ].predict(
                 [
                     ConfDict()[dataset]["scores"][
                         f"""{ConfDict()["current_indicator"]}_{i}"""
                     ]
                     for i in ConfDict()[dataset]["test_folds"][idx]
                 ]
-            )
-            + min_i
+            ),
+            ConfDict()["current_indicator"] in ["hv", "ms"],
         )
-        if ConfDict()["current_indicator"] in ["hv", "ms"]:
-            y_true = y_true[::-1]
-        else:
-            y_true = y_true
+        # if ConfDict()["current_indicator"] in ["hv", "ms"]:
+        #     y_true = y_true[::-1]
+        # else:
+        #     y_true = y_true
 
-        y_pred = (
-            get_index_of(
-                fate.predict_scores(
-                    np.array(
+        y_pred = get_index_of(
+            fate.predict_scores(
+                np.array(
+                    [
                         [
-                            [
-                                ConfDict()[dataset]["flatten_encoded"][str(i)].copy()
-                                for i in ConfDict()[dataset]["test_folds"][idx]
-                            ]
+                            ConfDict()[dataset]["flatten_encoded"][str(i)].copy()
+                            for i in ConfDict()[dataset]["test_folds"][idx]
                         ]
-                    )
-                )[0]
-            )
-            + min_i
-        )[::-1]
+                    ]
+                )
+            )[0],
+            True,
+        )
         corr, alpha = kendalltau(y_true, y_pred)
 
         raw_results.append(
@@ -372,8 +383,8 @@ def objective(config: Configuration, seed: int = 0) -> float:
     return 1 - np.mean(result_dict["cross_validation_4"])
 
 
-def objective_kendall(config: Configuration, seed: int = 0) -> float:
-    config_dict = config.get_dictionary()
+def objective_kendall(config_dict: Configuration, seed: int = 0) -> float:
+    # config_dict = config.get_dictionary()
     result_dict = {
         "iteration": ConfDict()["indicators"][ConfDict()["current_indicator"]][
             "iteration"
