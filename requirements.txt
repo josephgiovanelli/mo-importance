@@ -10,3 +10,4 @@ fairlearn
 torch
 pymoo
 pfevaluator
+jenkspy
