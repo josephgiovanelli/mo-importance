@@ -383,8 +383,8 @@ def objective(config: Configuration, seed: int = 0) -> float:
     return 1 - np.mean(result_dict["cross_validation_4"])
 
 
-def objective_kendall(config_dict: Configuration, seed: int = 0) -> float:
-    # config_dict = config.get_dictionary()
+def objective_kendall(config: Configuration, seed: int = 0) -> float:
+    config_dict = config.get_dictionary()
     result_dict = {
         "iteration": ConfDict()["indicators"][ConfDict()["current_indicator"]][
             "iteration"

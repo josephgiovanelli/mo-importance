@@ -50,7 +50,7 @@ logger.disabled = True
 if __name__ == "__main__":
     input_path = make_dir(os.path.join("/", "home", "input"))
     confs = [p for p in os.listdir(input_path) if ".json" in p]
-    datasets = [elem for elem in confs if elem not in get_tuning_datasets()][:2]
+    datasets = [elem for elem in confs if elem not in get_tuning_datasets()]
     create_configuration(file_name=datasets, origin="optimization")
 
     random.seed(ConfDict()["seed"])
