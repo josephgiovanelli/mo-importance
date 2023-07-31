@@ -28,7 +28,7 @@ if __name__ == "__main__":
             )
             pbar.update()
     print("--- PREFERENCE LEARNING ---")
-    subprocess.call(f"python src/preference_learning.py", shell=True)
+    subprocess.call(f"python src/preference_learning_eval.py", shell=True)
 
     evaluation_confs = [elem for elem in confs if elem not in get_tuning_datasets()]
     print("--- OPTIMIZATION LOOP ---")
@@ -38,3 +38,5 @@ if __name__ == "__main__":
                 f"python src/optimization.py --conf_file {conf}", shell=True
             )
             subprocess.call(f"python src/comparison.py --conf_file {conf}", shell=True)
+
+    subprocess.call(f"python src/summarizer.py", shell=True)
