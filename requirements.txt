@@ -5,8 +5,6 @@ psutil
 scipy
 smac
 openml
-codecarbon
-fairlearn
 torch
 pymoo
 pfevaluator
