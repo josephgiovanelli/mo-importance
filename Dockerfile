@@ -19,6 +19,6 @@ RUN pip install "git+https://github.com/slds-lmu/yahpo_gym#egg=yahpo_gym&subdire
 RUN wget -c https://github.com/slds-lmu/yahpo_data/archive/refs/tags/v1.0.zip && \
     unzip v1.0.zip && \
     rm -rf v1.0.zip
-    
+
 WORKDIR /home
 
