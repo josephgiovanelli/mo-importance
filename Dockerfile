@@ -9,17 +9,13 @@ RUN pip install --upgrade pip && \
     pip install tabulate && \
     pip install future && \
     rm requirements.txt
-RUN pip install git+https://github.com/kiudee/cs-ranking.git
-RUN pip install h5py
-RUN pip install "git+https://github.com/slds-lmu/yahpo_gym#egg=yahpo_gym&subdirectory=yahpo_gym"
-    # git clone https://github.com/automl/HPOBench.git && \
-    # cd HPOBench && \
-    # pip install .
+# RUN pip install git+https://github.com/kiudee/cs-ranking.git
+# RUN pip install h5py
+# RUN pip install "git+https://github.com/slds-lmu/yahpo_gym#egg=yahpo_gym&subdirectory=yahpo_gym"
+# RUN wget -c https://github.com/slds-lmu/yahpo_data/archive/refs/tags/v1.0.zip && \
+#     unzip v1.0.zip && \
+#     rm -rf v1.0.zip
 
-RUN wget -c https://github.com/slds-lmu/yahpo_data/archive/refs/tags/v1.0.zip && \
-    unzip v1.0.zip && \
-    rm -rf v1.0.zip
-
-RUN pip install jenkspy
+# RUN pip install jenkspy
 
 WORKDIR /home
