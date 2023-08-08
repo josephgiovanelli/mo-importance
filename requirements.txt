@@ -5,10 +5,8 @@ psutil
 scipy
 smac
 openml
+codecarbon
+fairlearn
+torch
 pymoo
 pfevaluator
-jenkspy
-scikit-learn
-requests
-tabulate
-future
