@@ -10,3 +10,4 @@ fairlearn
 torch
 pymoo
 pfevaluator
+scikit-learn==0.23.2
