@@ -40,3 +40,4 @@ if __name__ == "__main__":
             subprocess.call(f"python src/comparison.py --conf_file {conf}", shell=True)
 
     subprocess.call(f"python src/summarizer.py", shell=True)
+    subprocess.call(f"python src/plotter.py", shell=True)
