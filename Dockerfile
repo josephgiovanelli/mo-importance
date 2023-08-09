@@ -1,15 +1,13 @@
 FROM ghcr.io/josephgiovanelli/mo-importance:0.0.6
 
-RUN apt-get update && \
-    apt-get install -y git --no-install-recommends
-
+RUN mkdir dump
+WORKDIR /home/dump
+COPY . .
 RUN pip install --upgrade pip && \
-    pip install --upgrade pip setuptools wheel
+    pip install -r requirements.txt
+RUN chmod 777 scripts/*
 
-COPY requirements.txt requirements.txt
-RUN pip install --no-cache-dir --upgrade -r requirements.txt && \
-    rm requirements.txt
-
+WORKDIR /home
 RUN mkdir interactive-mo-ml
 WORKDIR /home/interactive-mo-ml
 ENTRYPOINT ["./scripts/wrapper_experiments.sh"]
