@@ -1,6 +1,5 @@
 FROM ghcr.io/josephgiovanelli/mo-importance:0.0.6
 
-WORKDIR /
 RUN apt-get update && \
     apt-get install -y git --no-install-recommends
 RUN pip install --upgrade pip && \
@@ -9,7 +8,7 @@ RUN wget -c https://github.com/slds-lmu/yahpo_data/archive/refs/tags/v1.0.zip &&
     unzip v1.0.zip && \
     rm -rf v1.0.zip
 
-RUN cd home && mkdir dump
+RUN mkdir dump
 WORKDIR /home/dump
 COPY . .
 RUN pip install --upgrade pip && \
