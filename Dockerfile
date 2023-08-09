@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/vscode/devcontainers/python:0-3.9
+FROM ghcr.io/josephgiovanelli/mo-importance:0.0.6
 
 RUN apt-get update && \
     apt-get install -y git --no-install-recommends
