@@ -123,7 +123,7 @@ def configspace() -> ConfigurationSpace:
 
 
 def compute_raw_results(config_dict, result_dict, dataset, mode, seed):
-    splits = KFold(n_splits=5, random_state=ConfDict()["seed"]).split(
+    splits = KFold(n_splits=5).split(
         ConfDict()[dataset]["X"]
     )
 
@@ -202,7 +202,7 @@ def get_index_of(my_list, reverse):
 
 
 def evaluate_model(config_dict, result_dict, dataset, mode, seed):
-    splits = KFold(n_splits=5, random_state=ConfDict()["seed"]).split(
+    splits = KFold(n_splits=5).split(
         ConfDict()[dataset]["X"]
     )
 

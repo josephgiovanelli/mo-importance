@@ -39,12 +39,7 @@ if __name__ == "__main__":
 
     encoded = load_encoded(ConfDict()["output_folder"])
     combinations = np.array(
-        [
-            rSubset(fold, 2)
-            for _, fold in KFold(n_splits=5, random_state=ConfDict()["seed"]).split(
-                list(encoded.keys())
-            )
-        ]
+        [rSubset(fold, 2) for _, fold in KFold(n_splits=5).split(list(encoded.keys()))]
     )
     combinations = combinations.reshape((-1, 2))
     tot = len(combinations)

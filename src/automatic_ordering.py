@@ -49,12 +49,7 @@ if __name__ == "__main__":
 
     flatten = load_encoded(path=ConfDict()["output_folder"], file_name="flatten.json")
     combinations = np.array(
-        [
-            rSubset(fold, 2)
-            for _, fold in KFold(n_splits=5, random_state=ConfDict()["seed"]).split(
-                list(flatten.keys())
-            )
-        ]
+        [rSubset(fold, 2) for _, fold in KFold(n_splits=5).split(list(flatten.keys()))]
     )
     combinations = combinations.reshape((-1, 2))
     tot = len(combinations)
