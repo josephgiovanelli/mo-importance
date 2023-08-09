@@ -49,10 +49,9 @@ logger.disabled = True
 import matplotlib.pyplot as plt
 
 
-def plot_mean_std(df, output_path):
-    indicators = df.index
+def plot_mean_std(df, indicators, output_path):
     x_ticks = df.columns
-    x_labels = "No. samples"
+    x_labels = "No. comparisons"
 
     nrows = 2
     ncols = 2
@@ -81,9 +80,8 @@ def plot_mean_std(df, output_path):
     fig.savefig(os.path.join(output_path, "preference_evaluation.pdf"))
 
 
-if __name__ == "__main__":
+def plot_preferencce_evaluation(output_path):
     input_path = make_dir(os.path.join("/", "home", "output", "preference"))
-    output_path = make_dir(os.path.join("/", "home", "plots"))
     indicators = ["hv", "sp", "ms", "r2"]
 
     def custom_agg(rows):
@@ -111,5 +109,121 @@ if __name__ == "__main__":
             }
         )
     )
+    print(results)
+    plot_mean_std(results, indicators, output_path)
 
-    plot_mean_std(results, output_path)
+
+def export_end_to_end_evaluation(output_path):
+    input_path = make_dir(os.path.join("/", "home", "output", "summary"))
+    output_path = make_dir(os.path.join("/", "home", "plots"))
+
+    def to_latex(cell):
+        struct = {
+            f"""{"indicator" if idx == 0 else "preference"}""": {
+                "mean": content.split("  ")[0],
+                "std": content.split("  ")[1],
+            }
+            for idx, content in enumerate(cell.split("/", 2))
+        }
+        return (
+            "\\begin{tabular}{ccc} "
+            + (
+                "\\textbf{"
+                if float(struct["preference"]["mean"])
+                > float(struct["indicator"]["mean"])
+                else ""
+            )
+            + struct["preference"]["mean"]
+            + (
+                "}"
+                if float(struct["preference"]["mean"])
+                > float(struct["indicator"]["mean"])
+                else ""
+            )
+            + "  & \multirow{2}{*}{\Large{$\\backslash$}} & "
+            + (
+                "\\textbf{"
+                if float(struct["indicator"]["mean"])
+                > float(struct["preference"]["mean"])
+                else ""
+            )
+            + struct["indicator"]["mean"]
+            + (
+                "}"
+                if float(struct["indicator"]["mean"])
+                > float(struct["preference"]["mean"])
+                else ""
+            )
+            + " \\\\ "
+            + "\\footnotesize{"
+            + (
+                "\\textbf{"
+                if float(struct["preference"]["mean"])
+                > float(struct["indicator"]["mean"])
+                else ""
+            )
+            + struct["preference"]["std"]
+            + (
+                "}"
+                if float(struct["preference"]["mean"])
+                > float(struct["indicator"]["mean"])
+                else ""
+            )
+            + "}"
+            + " & & "
+            + "\\footnotesize{"
+            + (
+                "\\textbf{"
+                if float(struct["indicator"]["mean"])
+                > float(struct["preference"]["mean"])
+                else ""
+            )
+            + struct["indicator"]["std"]
+            + (
+                "}"
+                if float(struct["indicator"]["mean"])
+                > float(struct["preference"]["mean"])
+                else ""
+            )
+            + "}"
+            + "\end{tabular}"
+        )
+
+    for budget in range(28, 140 + 28, 28):
+        results = pd.read_csv(
+            os.path.join(input_path, f"budget_{budget}.csv"),
+            index_col="indicators\preferences",
+        ).applymap(to_latex)
+
+        out = ""
+        for row in results.index:
+            for col in results.columns:
+                prefix, outfix = "", ""
+                if row == "hv" and col == "hv":
+                    prefix += "\\begin{table*}[!ht]\n\centering\n\t\\begin{tabular}{l|c|c|c|c}\n\t\\toprule\n\t$\mathcal{P} \\backslash \mathcal{I}$ & HV & SP & MS & R2 \\\\ \midrule"
+                if col == "hv":
+                    prefix += "\n\t" + row.upper() + " & "
+                outfix += " & " if col != "r2" else " \\\\ \midrule"
+                outfix += (
+                    ""
+                    if row != "r2" or col != "r2"
+                    else (
+                        "\n\t\end{tabular}\n\caption{Comparison between optimizing quality indicators (i.e., $\mathcal{I}$, columns) and optimizing the preference learning utilities (i.e., $\mathcal{P}$, rows). The preference learning model is trained using "
+                        + str(budget)
+                        + " pairwise comparisons.}\label{tbl:end_to_end_evaluation_"
+                        + str(budget)
+                        + "}\end{table*}"
+                    )
+                )
+                out += prefix + results[row][col] + outfix
+
+        out = out.replace("+-", "$\pm$")
+        with open(os.path.join(output_path, f"budget_{budget}.text"), "w") as text_file:
+            text_file.write(out)
+
+
+if __name__ == "__main__":
+    output_path = make_dir(os.path.join("/", "home", "plots"))
+
+    plot_preferencce_evaluation(output_path)
+    export_end_to_end_evaluation(output_path)
