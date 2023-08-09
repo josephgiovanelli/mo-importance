@@ -49,7 +49,7 @@ The instructions are valid for Unix-like systems (e.g., Linux Ubuntu, MacOS) and
 Open the terminal and type:
 
 ```
-docker run -it --volume ${PWD}/interactive-mo-ml:/home/interactive-mo-ml hcr.io/josephgiovanelli/mo-importance:0.2.1
+docker run -it --volume ${PWD}/interactive-mo-ml:/home/interactive-mo-ml ghcr.io/josephgiovanelli/mo-importance:0.2.1
 ```
 
 This creates and mounts the folder ```interactive-mo-ml``` into the container (which is populated with the code and the necessary scenarios), and run the paper experiments.
