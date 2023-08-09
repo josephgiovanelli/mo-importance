@@ -13,6 +13,11 @@ WORKDIR /home/dump
 COPY . .
 RUN pip install --upgrade pip && \
     pip install -r requirements.txt
-RUN chmod 777 scripts/*
 
+RUN mkdir input
+RUN mkdir output
+RUN mkdir logs
+RUN mkdir plots
+
+RUN chmod 777 scripts/*
 ENTRYPOINT ["./scripts/wrapper_experiments.sh"]

@@ -26,7 +26,7 @@ from utils.output import adapt_to_mode
 class LCBenchModel:
     def __init__(self):
         local_config.init_config()
-        local_config.set_data_path("/yahpo_data-1.0")
+        local_config.set_data_path("/home/yahpo_data-1.0")
         self.bench = benchmark_set.BenchmarkSet("lcbench")
         self.bench.set_instance(ConfDict()["task"])
 

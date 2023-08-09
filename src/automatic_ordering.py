@@ -11,8 +11,6 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
 from itertools import combinations
-from IPython.display import clear_output
-
 
 from sklearn.model_selection import KFold
 

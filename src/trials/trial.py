@@ -4,7 +4,7 @@ import yahpo_gym.benchmarks.lcbench
 
 
 local_config.init_config()
-local_config.set_data_path("/yahpo_data-1.0")
+local_config.set_data_path("/home/yahpo_data-1.0")
 
 # Select a Benchmark
 bench = benchmark_set.BenchmarkSet("lcbench")
