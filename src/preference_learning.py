@@ -96,7 +96,9 @@ if __name__ == "__main__":
             ConfDict()["indicators"][indicator]["summary"].to_csv(
                 os.path.join(
                     make_dir(
-                        os.path.join("/", "home", "output", "preference"),
+                        os.path.join(
+                            "/", "home", "interactive-mo-ml", "output", "preference"
+                        ),
                     ),
                     f"{indicator}.csv",
                 ),

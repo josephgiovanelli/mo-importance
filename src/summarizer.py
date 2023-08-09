@@ -48,7 +48,7 @@ logger.disabled = True
 
 
 if __name__ == "__main__":
-    input_path = make_dir(os.path.join("/", "home", "input"))
+    input_path = make_dir(os.path.join("/", "home", "interactive-mo-ml", "input"))
     confs = [p for p in os.listdir(input_path) if ".json" in p]
     datasets = [elem for elem in confs if elem not in get_tuning_datasets()]
     create_configuration(file_name=datasets, origin="optimization")
@@ -69,7 +69,9 @@ if __name__ == "__main__":
         axis=0,
     )
 
-    summary_path = make_dir(os.path.join("/", "home", "output", "summary"))
+    summary_path = make_dir(
+        os.path.join("/", "home", "interactive-mo-ml", "output", "summary")
+    )
     results.to_csv(os.path.join(summary_path, "results_raw.csv"), index=False)
 
     results = results[

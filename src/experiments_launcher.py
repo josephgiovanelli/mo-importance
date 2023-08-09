@@ -11,8 +11,8 @@ import yahpo_gym.benchmarks.lcbench
 from utils.common import get_tuning_datasets, make_dir
 
 if __name__ == "__main__":
-    input_path = make_dir(os.path.join("/", "home", "input"))
-    common_log_path = make_dir(os.path.join("/", "home", "logs"))
+    input_path = make_dir(os.path.join("/", "home", "interactive-mo-ml", "input"))
+    common_log_path = make_dir(os.path.join("/", "home", "interactive-mo-ml", "logs"))
     log_paths = {
         "preliminar_sampling": make_dir(
             os.path.join(common_log_path, "preliminar_sampling")

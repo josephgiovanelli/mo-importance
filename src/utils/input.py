@@ -18,7 +18,9 @@ class ConfDict(dict):
 
 
 def get_configuration(file_name: str, origin: str = "preliminar_sampling"):
-    with open(os.path.join("/", "home", "input", file_name)) as file:
+    with open(
+        os.path.join("/", "home", "interactive-mo-ml", "input", file_name)
+    ) as file:
         conf = json.load(file)
 
     conf["output_folder"] = os.path.join(

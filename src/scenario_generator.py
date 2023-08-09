@@ -22,7 +22,7 @@ template = {
 }
 
 if __name__ == "__main__":
-    input_path = make_dir(os.path.join("/", "home", "input"))
+    input_path = make_dir(os.path.join("/", "home", "interactive-mo-ml", "input"))
     local_config.init_config()
     local_config.set_data_path("/home/yahpo_data-1.0")
     tasks = benchmark_set.BenchmarkSet("lcbench").instances

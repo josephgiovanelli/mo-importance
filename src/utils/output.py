@@ -73,7 +73,9 @@ def save_preference_scores(scores):
 
 def save_config(file_name):
     ConfDict()["output_folder"] = file_name.split(".")[0]
-    with open(os.path.join("/", "home", "input", file_name), "w") as f:
+    with open(
+        os.path.join("/", "home", "interactive-mo-ml", "input", file_name), "w"
+    ) as f:
         json.dump(ConfDict(), f)
 
 

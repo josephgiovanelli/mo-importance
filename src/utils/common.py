@@ -40,7 +40,9 @@ def get_tuning_datasets():
         for elem in sorted(
             [
                 int((p.split(".")[0]).split("_")[1])
-                for p in os.listdir(os.path.join("/", "home", "input"))
+                for p in os.listdir(
+                    os.path.join("/", "home", "interactive-mo-ml", "input")
+                )
                 if ".json" in p
             ]
         )

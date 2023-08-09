@@ -42,7 +42,7 @@ if __name__ == "__main__":
     incumbents = {}
     indicators = ["hv", "sp", "ms", "r2"]
     # ConfDict()["config_dicts"] = load_json_file(
-    #     os.path.join("/", "home", "output", "preference", "incumbent.json")
+    #     os.path.join("/", "home", "interactive-mo-ml", "output", "preference", "incumbent.json")
     # )
     for indicator in indicators:
         for dataset in datasets:
@@ -122,7 +122,7 @@ if __name__ == "__main__":
         # ConfDict()["indicators"][indicator]["summary"].to_csv(
         #     os.path.join(
         #         make_dir(
-        #             os.path.join("/", "home", "output", "preference"),
+        #             os.path.join("/", "home", "interactive-mo-ml", "output", "preference"),
         #         ),
         #         f"{indicator}_mv.csv",
         #     ),
@@ -173,7 +173,9 @@ if __name__ == "__main__":
             ConfDict()["indicators"][indicator]["summary"].to_csv(
                 os.path.join(
                     make_dir(
-                        os.path.join("/", "home", "output", "preference"),
+                        os.path.join(
+                            "/", "home", "interactive-mo-ml", "output", "preference"
+                        ),
                     ),
                     f"{indicator}.csv",
                 ),

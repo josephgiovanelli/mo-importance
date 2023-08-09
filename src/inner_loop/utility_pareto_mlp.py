@@ -59,7 +59,14 @@ class UtilityParetoMLP(ParetoMLP):
         )
         if check_preferences(os.path.join(preference_path, "preferences.csv")):
             config_dict = load_json_file(
-                os.path.join("/", "home", "output", "preference", "incumbent.json")
+                os.path.join(
+                    "/",
+                    "home",
+                    "interactive-mo-ml",
+                    "output",
+                    "preference",
+                    "incumbent.json",
+                )
             )
             self.preference_models_ = {
                 key: MyRankSVM(**value, random_state=ConfDict()["seed"])

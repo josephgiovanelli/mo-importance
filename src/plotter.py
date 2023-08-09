@@ -81,7 +81,9 @@ def plot_mean_std(df, indicators, output_path):
 
 
 def plot_preferencce_evaluation(output_path):
-    input_path = make_dir(os.path.join("/", "home", "output", "preference"))
+    input_path = make_dir(
+        os.path.join("/", "home", "interactive-mo-ml", "output", "preference")
+    )
     indicators = ["hv", "sp", "ms", "r2"]
 
     def custom_agg(rows):
@@ -114,8 +116,10 @@ def plot_preferencce_evaluation(output_path):
 
 
 def export_end_to_end_evaluation(output_path):
-    input_path = make_dir(os.path.join("/", "home", "output", "summary"))
-    output_path = make_dir(os.path.join("/", "home", "plots"))
+    input_path = make_dir(
+        os.path.join("/", "home", "interactive-mo-ml", "output", "summary")
+    )
+    output_path = make_dir(os.path.join("/", "home", "interactive-mo-ml", "plots"))
 
     def to_latex(cell):
         struct = {
@@ -223,7 +227,7 @@ def export_end_to_end_evaluation(output_path):
 
 
 if __name__ == "__main__":
-    output_path = make_dir(os.path.join("/", "home", "plots"))
+    output_path = make_dir(os.path.join("/", "home", "interactive-mo-ml", "plots"))
 
     plot_preferencce_evaluation(output_path)
     export_end_to_end_evaluation(output_path)
