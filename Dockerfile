@@ -14,4 +14,6 @@ RUN wget -c https://github.com/slds-lmu/yahpo_data/archive/refs/tags/v1.0.zip &&
     unzip v1.0.zip && \
     rm -rf v1.0.zip
 
-WORKDIR /home
+RUN cd home && mkdir interactive-mo-ml
+WORKDIR /home/interactive-mo-ml
+ENTRYPOINT ["./scripts/wrapper_experiments.sh"]
