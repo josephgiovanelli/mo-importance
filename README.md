@@ -1,23 +1,55 @@
-# Reproducibility
+# Interactive Hyperparameter Optimization in Multi-Objective Problems via Preference Learning
 
-A Docker file is present to build the needed container (virtual envs are kind of "vintage" nowadays).
-There are two options:
-- [JUST RUN] run either ```scripts/start.sh``` (unix) or ```scripts/start.bat``` (windows) to build the container and launch ```calculate_et0.py```. If you want to run something different, you should either: (i) modify the scripts or (ii) once the container is running, run ```docker exec et0_calculation [your command]```, in this case ```et0_calculation``` is the name of the container and ```[your command]``` could be something like ```python file_name.py --param_name param_value``` or ```bash another_script.sh```. This option is usually use in deployment, not in dev.
-- [RUN & DEBUG] open vscode, which should suggest you to open the project in the devcontainer. Here, you can both run and debug each file through the vscode interface. In the container, there are some plugins installed that both help to maintain a "good-quality" code (e.g., black formatter) and are useful to develop/see results (csv reader). (To notice: if you open a terminal, you will find yourself inside the container, it is like your world is just the container.)
+## Requirements
 
-# Launch commands
+In order to reproduce the experiments in any operating systems, Docker is required: [https://www.docker.com/](https://www.docker.com/).
+Install it, and be sure that it is running when trying to reproduce the experiments.
 
-```
-git clone https://github.com/josephgiovanelli/mo-importance.git
-cd mo-importance/
-sudo chmod 777 scripts/*
-sudo ./scripts/start.sh 0.0.1
-```
-# Machine assignments
+To test if Docker is installed correctly:
+
+- open the terminal;
+- run ```docker run hello-world```.
+
+***Expected output:***
 
 ```
-.51: CIFAR_10_small stratified + bounds on performance
-.52: CIFAR_10 stratified + bounds on performance
-.53: CIFAR_10_small stratified + no bounds on performance
-.54: CIFAR_10 stratified + no bounds on performance
+Unable to find image 'hello-world:latest' locally
+latest: Pulling from library/hello-world
+2db29710123e: Pull complete
+Digest: sha256:7d246653d0511db2a6b2e0436cfd0e52ac8c066000264b3ce63331ac66dca625
+Status: Downloaded newer image for hello-world:latest
+
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+
+To generate this message, Docker took the following steps:
+ 1. The Docker client contacted the Docker daemon.
+ 2. The Docker daemon pulled the "hello-world" image from the Docker Hub.
+    (amd64)
+ 3. The Docker daemon created a new container from that image which runs the
+    executable that produces the output you are currently reading.
+ 4. The Docker daemon streamed that output to the Docker client, which sent it
+    to your terminal.
+
+To try something more ambitious, you can run an Ubuntu container with:
+ $ docker run -it ubuntu bash
+
+Share images, automate workflows, and more with a free Docker ID:
+ https://hub.docker.com/
+
+For more examples and ideas, visit:
+ https://docs.docker.com/get-started/
 ```
+
+## Reproducing the experiments
+
+The instructions are valid for Unix-like systems (e.g., Linux Ubuntu, MacOS) and Windows (if using PowerShell).
+
+
+Open the terminal and type:
+
+```
+docker run -it --volume ${PWD}/interactive-mo-ml:/home/interactive-mo-ml hcr.io/josephgiovanelli/mo-importance:0.2.1
+```
+
+This creates and mounts the folder ```interactive-mo-ml``` into the container (which is populated with the code and the necessary scenarios), and run the paper experiments.
