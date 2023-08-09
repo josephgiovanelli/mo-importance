@@ -26,6 +26,7 @@ def get_configuration(file_name: str, origin: str = "preliminar_sampling"):
     conf["output_folder"] = os.path.join(
         "/",
         "home",
+        "interactive-mo-ml",
         "output",
         conf["output_folder"],
         origin,
