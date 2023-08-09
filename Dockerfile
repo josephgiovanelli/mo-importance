@@ -4,6 +4,7 @@ RUN apt-get update && \
     apt-get install -y git --no-install-recommends
 
 RUN pip install --upgrade pip
+RUN pip install --upgrade pip setuptools wheel
 RUN pip install git+https://github.com/kiudee/cs-ranking.git
 
 COPY requirements.txt requirements.txt
