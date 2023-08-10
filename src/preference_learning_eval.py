@@ -67,9 +67,7 @@ if __name__ == "__main__":
                 ConfDict()[dataset]["test_folds"] = np.array(
                     [
                         fold
-                        for _, fold in KFold(
-                            n_splits=5, random_state=ConfDict()["seed"]
-                        ).split(
+                        for _, fold in KFold(n_splits=5).split(
                             range(
                                 int(
                                     len(ConfDict()[dataset]["scores"].keys())
