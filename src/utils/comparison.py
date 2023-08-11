@@ -5,7 +5,7 @@ def get_element_from_results(results, preference_budget, column, row, mode, aggr
             & (results["preference_budget"] == preference_budget)
             & (results["main_indicator"] == (column if mode == "preferences" else row))
             & (results["mode"] == mode),
-            f"preferences {aggregate}",
+            f"indicators {aggregate}",
         ].values[0],
         2,
     )
