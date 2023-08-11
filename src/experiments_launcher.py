@@ -56,6 +56,7 @@ if __name__ == "__main__":
     print("--- OPTIMIZATION LOOP ---")
     with tqdm(total=len(evaluation_confs)) as pbar:
         for conf in evaluation_confs:
+            log_file_name = conf.split(".")[0]
             subprocess.call(
                 f"""python src/optimization.py --conf_file {conf} > {log_paths["optimization"]}/{log_file_name}_out.txt""",
                 shell=True,
@@ -64,6 +65,7 @@ if __name__ == "__main__":
                 f"""python src/comparison.py --conf_file {conf} > {log_paths["comparison"]}/{log_file_name}_out.txt""",
                 shell=True,
             )
+            pbar.update()
 
     subprocess.call(
         f"""python src/summarizer.py > {log_paths["summarizer"]}/{log_file_name}_out.txt""",
