@@ -112,7 +112,7 @@ def plot_preferencce_evaluation(output_path):
             }
         )
     )
-    print(results)
+    # print(results)
     plot_mean_std(results, indicators, output_path)
 
 
@@ -293,7 +293,7 @@ def export_end_to_end_evaluation(output_path):
         normalized_results = loaded_results.apply(
             lambda x: x.apply(lambda d: get_colors(d, x.name)), axis=0
         )
-        print(normalized_results)
+        # print(normalized_results)
         blue_gradients = (
             round((normalized_results - 1) / (max - 1) * 100).astype(int).astype(str)
         )
@@ -303,8 +303,8 @@ def export_end_to_end_evaluation(output_path):
             .astype(int)
             .astype(str)
         )
-        print(blue_gradients)
-        print(red_gradients)
+        # print(blue_gradients)
+        # print(red_gradients)
         for row in loaded_results.itertuples(index=True):
             for column in indicators:
                 loaded_results.loc[getattr(row, "Index"), column] = (
