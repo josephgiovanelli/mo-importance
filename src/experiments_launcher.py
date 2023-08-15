@@ -10,6 +10,20 @@ import yahpo_gym.benchmarks.lcbench
 
 from utils.common import get_tuning_datasets, make_dir
 
+
+def run_cmd(cmd, stdout_path, stderr_path):
+    open(stdout_path, "w")
+    open(stderr_path, "w")
+    with open(stdout_path, "a") as log_out:
+        with open(stderr_path, "a") as log_err:
+            subprocess.call(
+                cmd,
+                shell=True,
+                stdout=log_out,
+                stderr=log_err,
+            )
+
+
 if __name__ == "__main__":
     input_path = make_dir(os.path.join("/", "home", "interactive-mo-ml", "input"))
     common_log_path = make_dir(os.path.join("/", "home", "interactive-mo-ml", "logs"))
@@ -29,49 +43,74 @@ if __name__ == "__main__":
         "plotter": make_dir(os.path.join(common_log_path, "plotter")),
     }
 
+    print("\n\n")
     print("--- SCENARIO GENERATION ---")
     subprocess.call("python src/scenario_generator.py", shell=True)
-
     confs = [p for p in os.listdir(input_path) if ".json" in p]
-    print("--- PRELIMINAR SAMPLING ---")
+
+    print("\n\n")
+    print("--- PRELIMINARy SAMPLING ---")
     with tqdm(total=len(confs)) as pbar:
         for conf in confs:
             log_file_name = conf.split(".")[0]
-            subprocess.call(
-                f"""python src/preliminar_sampling.py --conf_file {conf} > {log_paths["preliminar_sampling"]}/{log_file_name}_out.txt""",
-                shell=True,
+            run_cmd(
+                f"python src/preliminar_sampling.py --conf_file {conf}",
+                os.path.join(
+                    log_paths["preliminar_sampling"], f"{log_file_name}_stdout.txt"
+                ),
+                os.path.join(
+                    log_paths["preliminar_sampling"], f"{log_file_name}_stderr.txt"
+                ),
             )
-            subprocess.call(
-                f"""python src/automatic_ordering.py --conf_file {conf} > {log_paths["automatic_ordering"]}/{log_file_name}_out.txt""",
-                shell=True,
+
+            run_cmd(
+                f"python src/automatic_ordering.py --conf_file {conf}",
+                os.path.join(
+                    log_paths["automatic_ordering"], f"{log_file_name}_stdout.txt"
+                ),
+                os.path.join(
+                    log_paths["automatic_ordering"], f"{log_file_name}_stderr.txt"
+                ),
             )
+
             pbar.update()
-    print("--- PREFERENCE LEARNING ---")
-    subprocess.call(
-        f"""python src/preference_learning_eval.py > {log_paths["preference_learning"]}/out.txt""",
-        shell=True,
+
+    print("\n\n")
+    print("--- INTERACTIVE PREFERENCE LEARNING ---")
+    run_cmd(
+        "python src/preference_learning_eval.py",
+        os.path.join(log_paths["preliminar_sampling"], f"stdout.txt"),
+        os.path.join(log_paths["preliminar_sampling"], f"stderr.txt"),
     )
 
     evaluation_confs = [elem for elem in confs if elem not in get_tuning_datasets()]
-    print("--- OPTIMIZATION LOOP ---")
+
+    print("\n\n")
+    print("--- UTILITY-DRIVEN AUTOML ---")
     with tqdm(total=len(evaluation_confs)) as pbar:
         for conf in evaluation_confs:
             log_file_name = conf.split(".")[0]
-            subprocess.call(
-                f"""python src/optimization.py --conf_file {conf} > {log_paths["optimization"]}/{log_file_name}_out.txt""",
-                shell=True,
+            run_cmd(
+                f"python src/optimization.py --conf_file {conf}",
+                os.path.join(log_paths["optimization"], f"{log_file_name}_stdout.txt"),
+                os.path.join(log_paths["optimization"], f"{log_file_name}_stderr.txt"),
             )
-            subprocess.call(
-                f"""python src/comparison.py --conf_file {conf} > {log_paths["comparison"]}/{log_file_name}_out.txt""",
-                shell=True,
+            run_cmd(
+                f"python src/comparison.py --conf_file {conf}",
+                os.path.join(log_paths["comparison"], f"{log_file_name}_stdout.txt"),
+                os.path.join(log_paths["comparison"], f"{log_file_name}_stderr.txt"),
             )
             pbar.update()
 
-    subprocess.call(
-        f"""python src/summarizer.py > {log_paths["summarizer"]}/{log_file_name}_out.txt""",
-        shell=True,
+    print("\n\n")
+    print("--- RESULT COLLECTION ---")
+    run_cmd(
+        f"python src/summarizer.py --conf_file {conf}",
+        os.path.join(log_paths["summarizer"], f"{log_file_name}_stdout.txt"),
+        os.path.join(log_paths["summarizer"], f"{log_file_name}_stderr.txt"),
     )
-    subprocess.call(
-        f"""python src/plotter.py > {log_paths["plotter"]}/{log_file_name}_out.txt""",
-        shell=True,
+    run_cmd(
+        f"python src/plotter.py --conf_file {conf}",
+        os.path.join(log_paths["plotter"], f"{log_file_name}_stdout.txt"),
+        os.path.join(log_paths["plotter"], f"{log_file_name}_stderr.txt"),
     )
