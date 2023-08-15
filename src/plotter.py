@@ -48,6 +48,8 @@ logger.disabled = True
 
 import matplotlib.pyplot as plt
 
+indicators = ["hv", "sp", "ms", "r2"]
+
 
 def plot_mean_std(df, indicators, output_path):
     x_ticks = df.columns
@@ -84,7 +86,6 @@ def plot_preferencce_evaluation(output_path):
     input_path = make_dir(
         os.path.join("/", "home", "interactive-mo-ml", "output", "preference")
     )
-    indicators = ["hv", "sp", "ms", "r2"]
 
     def custom_agg(rows):
         converted_rows = np.array([np.fromstring(row[1:-1], sep=",") for row in rows])
@@ -121,83 +122,201 @@ def export_end_to_end_evaluation(output_path):
     )
     output_path = make_dir(os.path.join("/", "home", "interactive-mo-ml", "plots"))
 
-    def to_latex(cell):
-        struct = {
+    def get_struct(cell, with_colors=True):
+        numbers = cell if not (with_colors) else cell[0]
+        to_return = {
             f"""{"indicator" if idx == 0 else "preference"}""": {
                 "mean": content.split("  ")[0],
                 "std": content.split("  ")[1],
             }
-            for idx, content in enumerate(cell.split("/", 2))
+            for idx, content in enumerate(numbers.split("/", 2))
         }
+        return to_return if not (with_colors) else (to_return, cell[1], cell[2])
+
+    def get_colors(cell, index):
+        struct = get_struct(cell, with_colors=False)
+        if index in ["hv", "ms"]:
+            return float(struct["preference"]["mean"]) / float(
+                struct["indicator"]["mean"]
+            )
+        else:
+            return float(struct["indicator"]["mean"]) / float(
+                struct["preference"]["mean"]
+            )
+
+    max, min = -np.inf, np.inf
+    for budget in range(28, 140 + 28, 28):
+        loaded_results = pd.read_csv(
+            os.path.join(input_path, f"budget_{budget}.csv"),
+            index_col="indicators\preferences",
+        )
+        normalized_results = loaded_results.apply(
+            lambda x: x.apply(lambda d: get_colors(d, x.name)), axis=0
+        )
+        max = (
+            max
+            if max > normalized_results.max().max()
+            else normalized_results.max().max()
+        )
+        min = (
+            min
+            if min < normalized_results.min().min()
+            else normalized_results.min().min()
+        )
+
+    def compare(preference_value, indicator_value, indicator):
+        if indicator in ["hv", "ms"]:
+            return preference_value > indicator_value
+        else:
+            return preference_value < indicator_value
+
+    def to_latex(cell, index):
+        struct, blue, red = get_struct(cell)
         return (
-            "\\begin{tabular}{ccc} "
+            "\\cellcolor{"
+            + ("blue" if int(blue) > 0 else "red")
+            + "!"
+            + (blue if int(blue) > 0 else red)
+            + "}{\\begin{tabular}{ccc} "
+            + ("\\textcolor{white}{" if int(blue) > 60 else "")
             + (
                 "\\textbf{"
-                if float(struct["preference"]["mean"])
-                > float(struct["indicator"]["mean"])
+                if compare(
+                    float(struct["preference"]["mean"]),
+                    float(struct["indicator"]["mean"]),
+                    index,
+                )
                 else ""
             )
             + struct["preference"]["mean"]
             + (
                 "}"
-                if float(struct["preference"]["mean"])
-                > float(struct["indicator"]["mean"])
+                if compare(
+                    float(struct["preference"]["mean"]),
+                    float(struct["indicator"]["mean"]),
+                    index,
+                )
                 else ""
             )
-            + "  & \multirow{2}{*}{\Large{$\\backslash$}} & "
+            + ("}" if int(blue) > 60 else "")
+            + "  & \multirow{2}{*}{"
+            + ("\\textcolor{white}{" if int(blue) > 60 else "")
+            + "\Large{$\\backslash$}"
+            + ("}" if int(blue) > 60 else "")
+            + "} & "
+            + ("\\textcolor{white}{" if int(blue) > 60 else "")
             + (
                 "\\textbf{"
-                if float(struct["indicator"]["mean"])
-                > float(struct["preference"]["mean"])
+                if not (
+                    compare(
+                        float(struct["preference"]["mean"]),
+                        float(struct["indicator"]["mean"]),
+                        index,
+                    )
+                )
                 else ""
             )
             + struct["indicator"]["mean"]
             + (
                 "}"
-                if float(struct["indicator"]["mean"])
-                > float(struct["preference"]["mean"])
+                if not (
+                    compare(
+                        float(struct["preference"]["mean"]),
+                        float(struct["indicator"]["mean"]),
+                        index,
+                    )
+                )
                 else ""
             )
+            + ("}" if int(blue) > 60 else "")
             + " \\\\ "
             + "\\footnotesize{"
+            + ("\\textcolor{white}{" if int(blue) > 60 else "")
             + (
                 "\\textbf{"
-                if float(struct["preference"]["mean"])
-                > float(struct["indicator"]["mean"])
+                if compare(
+                    float(struct["preference"]["mean"]),
+                    float(struct["indicator"]["mean"]),
+                    index,
+                )
                 else ""
             )
             + struct["preference"]["std"]
             + (
                 "}"
-                if float(struct["preference"]["mean"])
-                > float(struct["indicator"]["mean"])
+                if compare(
+                    float(struct["preference"]["mean"]),
+                    float(struct["indicator"]["mean"]),
+                    index,
+                )
                 else ""
             )
+            + ("}" if int(blue) > 60 else "")
             + "}"
             + " & & "
             + "\\footnotesize{"
+            + ("\\textcolor{white}{" if int(blue) > 60 else "")
             + (
                 "\\textbf{"
-                if float(struct["indicator"]["mean"])
-                > float(struct["preference"]["mean"])
+                if not (
+                    compare(
+                        float(struct["preference"]["mean"]),
+                        float(struct["indicator"]["mean"]),
+                        index,
+                    )
+                )
                 else ""
             )
             + struct["indicator"]["std"]
             + (
                 "}"
-                if float(struct["indicator"]["mean"])
-                > float(struct["preference"]["mean"])
+                if not (
+                    compare(
+                        float(struct["preference"]["mean"]),
+                        float(struct["indicator"]["mean"]),
+                        index,
+                    )
+                )
                 else ""
             )
+            + ("}" if int(blue) > 60 else "")
             + "}"
-            + "\end{tabular}"
+            + "\end{tabular}}"
         )
 
+    complete_output = ""
     for budget in range(28, 140 + 28, 28):
-        results = pd.read_csv(
+        loaded_results = pd.read_csv(
             os.path.join(input_path, f"budget_{budget}.csv"),
             index_col="indicators\preferences",
-        ).applymap(to_latex)
+        )
+        normalized_results = loaded_results.apply(
+            lambda x: x.apply(lambda d: get_colors(d, x.name)), axis=0
+        )
+        print(normalized_results)
+        blue_gradients = (
+            round((normalized_results - 1) / (max - 1) * 100).astype(int).astype(str)
+        )
+        normalized_results *= -1
+        red_gradients = (
+            round((normalized_results - (-1)) / (0 - (-1)) * 100)
+            .astype(int)
+            .astype(str)
+        )
+        print(blue_gradients)
+        print(red_gradients)
+        for row in loaded_results.itertuples(index=True):
+            for column in indicators:
+                loaded_results.loc[getattr(row, "Index"), column] = (
+                    loaded_results.loc[getattr(row, "Index"), column],
+                    blue_gradients.loc[getattr(row, "Index"), column],
+                    red_gradients.loc[getattr(row, "Index"), column],
+                )
+        # print(pd.merge(loaded_results, blue_gradients, how="inner"))
+        results = loaded_results.apply(
+            lambda x: x.apply(lambda d: to_latex(d, x.name)), axis=0
+        )
+        # .applymap(to_latex)
 
         out = ""
         for row in results.index:
@@ -222,8 +341,16 @@ def export_end_to_end_evaluation(output_path):
                 out += prefix + results[row][col] + outfix
 
         out = out.replace("+-", "$\pm$")
+        out = out.replace("HV", "$HV\\uparrow$")
+        out = out.replace("MS", "$MS\\uparrow$")
+        out = out.replace("SP", "$SP\downarrow$")
+        out = out.replace("R2", "$R2\downarrow$")
         with open(os.path.join(output_path, f"budget_{budget}.text"), "w") as text_file:
             text_file.write(out)
+        complete_output += out + "\n\n"
+
+    with open(os.path.join(output_path, f"complete_output.text"), "w") as text_file:
+        text_file.write(complete_output)
 
 
 if __name__ == "__main__":
