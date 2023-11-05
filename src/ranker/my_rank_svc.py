@@ -24,10 +24,14 @@ class MyRankSVM(ObjectRanker, MyPairwiseSVM):
         penalty="l1",
         normalize=False,
         fit_intercept=True,
-        svm_implementation="logistic",
+        svm_implementation="kernel",
         features_implementation="none",
         n_features=None,
         random_state=None,
+        kernel="rbf",
+        degree=3,
+        gamma=0.1,
+        shrinking="True",
         **kwargs,
     ):
         """
@@ -71,6 +75,10 @@ class MyRankSVM(ObjectRanker, MyPairwiseSVM):
             features_implementation=features_implementation,
             n_features=n_features,
             random_state=random_state,
+            kernel=kernel,
+            degree=degree,
+            gamma=gamma,
+            shrinking=shrinking,
             **kwargs,
         )
         logger.info("Initializing network")

@@ -72,9 +72,9 @@ def configspace() -> ConfigurationSpace:
     C = UniformFloatHyperparameter("C", 0.8, 1.5, log=False, default_value=1.0)
     tol = UniformFloatHyperparameter("tol", 1e-5, 1e-1, default_value=1e-3, log=True)
     dual = CategoricalHyperparameter("dual", ["True", "False"], default_value="False")
-    # loss = CategoricalHyperparameter(
-    #     "loss", ["squared_hinge", "hinge"], default_value="squared_hinge"
-    # )
+    loss = CategoricalHyperparameter(
+        "loss", ["squared_hinge", "hinge"], default_value="squared_hinge"
+    )
     penalty = CategoricalHyperparameter("penalty", ["l1", "l2"], default_value="l1")
 
     # n_features = UniformIntegerHyperparameter(
@@ -94,18 +94,30 @@ def configspace() -> ConfigurationSpace:
         "normalize", ["True", "False"], default_value="False"
     )
 
+    kernel = CategoricalHyperparameter(
+        name="kernel", choices=["rbf", "poly", "sigmoid"], default_value="rbf"
+    )
+    degree = UniformIntegerHyperparameter("degree", 2, 5, default_value=3)
+    gamma = UniformFloatHyperparameter(
+        "gamma", 3.0517578125e-05, 8, log=True, default_value=0.1
+    )
+    shrinking = CategoricalHyperparameter(
+        "shrinking", ["True", "False"], default_value="True"
+    )
+
     cs = ConfigurationSpace()
     cs.add_hyperparameters(
         [
             C,
             tol,
-            dual,
+            # dual,
             # loss,
-            penalty,
-            # n_features,
-            # svm_implementation,
-            # features_implementation,
+            # penalty,
             normalize,
+            kernel,
+            degree,
+            gamma,
+            shrinking,
         ]
     )
 

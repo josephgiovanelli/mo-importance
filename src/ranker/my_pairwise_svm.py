@@ -30,10 +30,14 @@ class MyPairwiseSVM(Learner):
         penalty="l1",
         normalize=False,
         fit_intercept=True,
-        svm_implementation="logistic",
+        svm_implementation="kernel",
         features_implementation="none",
         n_features=None,
         random_state=None,
+        kernel="rbf",
+        degree=3,
+        gamma=0.1,
+        shrinking="True",
         **kwargs,
     ):
         """Create an instance of the PairwiseSVM model for any preference learner.
@@ -72,6 +76,10 @@ class MyPairwiseSVM(Learner):
         self.features_implementation = features_implementation
         self.n_features = n_features
         self.random_state = random_state
+        self.kernel = kernel
+        self.degree = degree
+        self.gamma = gamma
+        self.shrinking = shrinking
 
     def _pre_fit(self):
         super()._pre_fit()
@@ -99,21 +107,19 @@ class MyPairwiseSVM(Learner):
                 random_state=self.random_state_,
             )
             logger.info("Linear SVC model ")
-        # elif self.implementation == "kernel":
-        #     self.model_ = SVC(
-        #         C=self.C,
-        #         kernel=self.kernel,
-        #         degree=self.degree,
-        #         gamma=self.gamma,
-        #         coef0=self.coef0,
-        #         shrinking=self.shrinking,
-        #         tol=self.tol,
-        #         class_weight=self.class_weight,
-        #         max_iter=self.max_iter,
-        #         random_state=self.random_state,
-        #         decision_function_shape="ovr",
-        #         random_state=self.random_state_,
-        #     )
+        elif self.implementation == "kernel":
+            self.model_ = SVC(
+                C=self.C,
+                kernel=self.kernel,
+                degree=self.degree,
+                gamma=self.gamma,
+                shrinking=self.shrinking,
+                tol=self.tol,
+                class_weight=None,
+                random_state=self.random_state,
+                decision_function_shape="ovr",
+                # random_state=self.random_state_,
+            )
         else:
             raise Exception("Invalid SVM implementation")
 
