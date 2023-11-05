@@ -1,5 +1,7 @@
 # Interactive Hyperparameter Optimization in Multi-Objective Problems via Preference Learning
 
+This is the repository of the paper "Interactive Hyperparameter Optimization in Multi-Objective Problems via Preference Learning" submitted to The 38th Annual AAAI Conference on Artificial Intelligence.
+
 ## Requirements
 
 In order to reproduce the experiments in any operating systems, Docker is required: [https://www.docker.com/](https://www.docker.com/).
@@ -49,7 +51,27 @@ The instructions are valid for Unix-like systems (e.g., Linux Ubuntu, MacOS) and
 Open the terminal and type:
 
 ```
-docker run -it --volume ${PWD}/interactive-mo-ml:/home/interactive-mo-ml ghcr.io/josephgiovanelli/mo-importance:0.2.1
+docker run -it --volume ${PWD}/interactive-mo-ml:/home/interactive-mo-ml ghcr.io/anonymus-aaai-24/interactive-mo-ml:1.0.0
 ```
 
 This creates and mounts the folder ```interactive-mo-ml``` into the container (which is populated with the code and the necessary scenarios), and run the paper experiments.
+
+## Structure
+
+The structure of the project is the follow:
+
+- .devcontainer contains the indication to run a devcontainer inside the IDE vscode;
+- .github contains the material for the GitHub action;
+- scripts contains the running scripts;
+- src contains the source code;
+- .gitattributes and .gitignore are configuration git files;
+- Dockerfile is the configuration file to build the Docker container;
+- README.md describes the content of the project;
+- requirements.txt lists the required python packages.
+
+The following folders will be generated
+- input containing the configuration files to run the experiments;
+- logs containing the logs of the experiments;
+- output containing the results of the experiments;
+- plots containing the tables and figures of the paper;
+- smac3_output containing details of the performed optimizations.

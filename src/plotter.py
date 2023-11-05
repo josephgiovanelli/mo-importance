@@ -323,7 +323,7 @@ def export_end_to_end_evaluation(output_path):
             for col in results.columns:
                 prefix, outfix = "", ""
                 if row == "hv" and col == "hv":
-                    prefix += "\\begin{table*}[!ht]\n\centering\n\t\\begin{tabular}{l|c|c|c|c}\n\t\\toprule\n\t$\mathcal{P} \\backslash \mathcal{I}$ & HV & SP & MS & R2 \\\\ \midrule"
+                    prefix += "\\begin{table*}[!ht]\n\centering\n\t\\begin{tabular}{l|c|c|c|c}\n\t\\toprule\n\tPB$\backslash$IB & HV & SP & MS & R2 \\\\ \midrule"
                 if col == "hv":
                     prefix += "\n\t" + row.upper() + " & "
                 outfix += " & " if col != "r2" else " \\\\ \midrule"
@@ -331,7 +331,7 @@ def export_end_to_end_evaluation(output_path):
                     ""
                     if row != "r2" or col != "r2"
                     else (
-                        "\n\t\end{tabular}\n\caption{Comparison between optimizing quality indicators (i.e., $\mathcal{I}$, columns) and optimizing the preference learning utilities (i.e., $\mathcal{P}$, rows). The preference learning model is trained using "
+                        "\n\t\end{tabular}\n\caption{Comparison between indicator-based HPO (i.e., IB, columns) and preference-based HPO (i.e., PB, rows). The preference learning model is trained using "
                         + str(budget)
                         + " pairwise comparisons.}\label{tbl:end_to_end_evaluation_"
                         + str(budget)

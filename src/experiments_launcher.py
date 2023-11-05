@@ -49,7 +49,7 @@ if __name__ == "__main__":
     confs = [p for p in os.listdir(input_path) if ".json" in p]
 
     print("\n\n")
-    print("--- PRELIMINARy SAMPLING ---")
+    print("--- PRELIMINARY SAMPLING ---")
     with tqdm(total=len(confs)) as pbar:
         for conf in confs:
             log_file_name = conf.split(".")[0]
@@ -77,16 +77,18 @@ if __name__ == "__main__":
 
     print("\n\n")
     print("--- INTERACTIVE PREFERENCE LEARNING ---")
+    print("\tIt might take some minutes...")
     run_cmd(
         "python src/preference_learning_eval.py",
         os.path.join(log_paths["preliminar_sampling"], f"stdout.txt"),
         os.path.join(log_paths["preliminar_sampling"], f"stderr.txt"),
     )
+    print("DONE.")
 
     evaluation_confs = [elem for elem in confs if elem not in get_tuning_datasets()]
 
     print("\n\n")
-    print("--- UTILITY-DRIVEN AUTOML ---")
+    print("--- UTILITY-DRIVEN HPO ---")
     with tqdm(total=len(evaluation_confs)) as pbar:
         for conf in evaluation_confs:
             log_file_name = conf.split(".")[0]
