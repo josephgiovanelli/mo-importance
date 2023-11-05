@@ -107,7 +107,7 @@ class MyPairwiseSVM(Learner):
                 random_state=self.random_state_,
             )
             logger.info("Linear SVC model ")
-        elif self.implementation == "kernel":
+        elif self.svm_implementation == "kernel":
             self.model_ = SVC(
                 C=self.C,
                 kernel=self.kernel,
