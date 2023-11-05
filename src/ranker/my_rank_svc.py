@@ -24,7 +24,7 @@ class MyRankSVM(ObjectRanker, MyPairwiseSVM):
         penalty="l1",
         normalize=False,
         fit_intercept=True,
-        svm_implementation="kernel",
+        svm_implementation="linear",
         features_implementation="none",
         n_features=None,
         random_state=None,

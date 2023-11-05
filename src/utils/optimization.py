@@ -38,7 +38,7 @@ from utils.output import (
 
 def multi_objective(mode="fair", preference_budget=None):
     new_output_path, is_dump = restore_results(
-        mode=mode, main_indicator=None, preference_budget=preference_budget
+        mode=mode, main_indicator=None, preference_budget=preference_budget, seed=None
     )
     if not is_dump:
         mlp = MLP("lcbench")
