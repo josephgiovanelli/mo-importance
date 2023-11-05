@@ -30,7 +30,7 @@ class MyPairwiseSVM(Learner):
         penalty="l1",
         normalize=False,
         fit_intercept=True,
-        svm_implementation="linear",
+        svm_implementation="logistic",
         features_implementation="none",
         n_features=None,
         random_state=None,

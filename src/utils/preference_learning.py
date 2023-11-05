@@ -72,9 +72,9 @@ def configspace() -> ConfigurationSpace:
     C = UniformFloatHyperparameter("C", 0.8, 1.5, log=False, default_value=1.0)
     tol = UniformFloatHyperparameter("tol", 1e-5, 1e-1, default_value=1e-3, log=True)
     dual = CategoricalHyperparameter("dual", ["True", "False"], default_value="False")
-    loss = CategoricalHyperparameter(
-        "loss", ["squared_hinge", "hinge"], default_value="squared_hinge"
-    )
+    # loss = CategoricalHyperparameter(
+    #     "loss", ["squared_hinge", "hinge"], default_value="squared_hinge"
+    # )
     penalty = CategoricalHyperparameter("penalty", ["l1", "l2"], default_value="l1")
 
     # n_features = UniformIntegerHyperparameter(
@@ -123,9 +123,7 @@ def configspace() -> ConfigurationSpace:
 
 
 def compute_raw_results(config_dict, result_dict, dataset, mode, seed):
-    splits = KFold(n_splits=5).split(
-        ConfDict()[dataset]["X"]
-    )
+    splits = KFold(n_splits=5).split(ConfDict()[dataset]["X"])
 
     raw_results = []
     for train, test in splits:
@@ -202,9 +200,7 @@ def get_index_of(my_list, reverse):
 
 
 def evaluate_model(config_dict, result_dict, dataset, mode, seed):
-    splits = KFold(n_splits=5).split(
-        ConfDict()[dataset]["X"]
-    )
+    splits = KFold(n_splits=5).split(ConfDict()[dataset]["X"])
 
     raw_results, raw_results_pair = [], []
     for idx, (train, test) in enumerate(splits):
