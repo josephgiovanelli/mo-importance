@@ -100,7 +100,7 @@ def configspace() -> ConfigurationSpace:
             C,
             tol,
             dual,
-            loss,
+            # loss,
             penalty,
             # n_features,
             # svm_implementation,
