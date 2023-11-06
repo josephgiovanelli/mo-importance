@@ -79,7 +79,7 @@ class MyPairwiseSVM(Learner):
         self.kernel = kernel
         self.degree = degree
         self.gamma = gamma
-        self.shrinking = shrinking
+        self.shrinking = check_for_bool(shrinking)
 
     def _pre_fit(self):
         super()._pre_fit()
