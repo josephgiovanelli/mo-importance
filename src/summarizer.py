@@ -36,6 +36,7 @@ from utils.preference_learning import get_preference_budgets
 from utils.output import (
     adapt_paretos,
     check_pictures,
+    load_json_file,
     save_paretos,
     check_dump,
     load_dump,
@@ -129,4 +130,39 @@ if __name__ == "__main__":
             ),
             index=False,
         )
+
+    mo_results = {}
+    for mo_mode in ["fair", "unfair"]:
+        mo_results[mo_mode] = pd.concat(
+            [
+                pd.DataFrame(
+                    load_json_file(
+                        os.path.join(
+                            ConfDict()[conf]["output_folder"],
+                            f"multi_objective_{mo_mode}",
+                            "140",
+                            "scores.json",
+                        )
+                    )["0"]
+                ).rename(
+                    mapper={"indicators": conf.split(".")[0].split("_")[1]},
+                    axis="columns",
+                )[
+                    conf.split(".")[0].split("_")[1]
+                ]
+                for conf in datasets
+            ],
+            axis=1,
+        )
+        mo_results[mo_mode].to_csv(
+            os.path.join(summary_path, f"results_mo_{mo_mode}_raw.csv")
+        )
+        mo_results[mo_mode][f"{mo_mode}_mean"] = mo_results[mo_mode].mean(axis=1)
+        mo_results[mo_mode][f"{mo_mode}_std"] = mo_results[mo_mode].std(axis=1)
+        mo_results[mo_mode] = mo_results[mo_mode][[f"{mo_mode}_mean", f"{mo_mode}_std"]]
+        # mo_results[mo_mode] = mo_results[mo_mode].groupby().agg(["mean", "std"])
+    pd.concat(mo_results.values(), axis=1).to_csv(
+        os.path.join(summary_path, f"results_mo_agg.csv")
+    )
+
 # %%
