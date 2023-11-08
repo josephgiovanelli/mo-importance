@@ -38,7 +38,7 @@ from utils.output import (
 
 def multi_objective(mode="fair", preference_budget=None):
     new_output_path, is_dump = restore_results(
-        mode=mode, main_indicator=None, preference_budget=preference_budget, seed=None
+        mode=mode, main_indicator=None, preference_budget=preference_budget
     )
     if not is_dump:
         mlp = MLP("lcbench")
@@ -228,6 +228,7 @@ def single_objective(
             new_output_path,
             "dump",
         )
+
         save_paretos(
             np.array(ConfDict()["scores"]).flatten(),
             new_output_path,

@@ -176,7 +176,12 @@ class MyPairwiseSVM(Learner):
         #     self.features_expl_ = str(self.features_.components_)
         else:
             self.features_expl_ = ""
-        self.weights_ = self.model_.coef_.flatten()
+
+        if self.svm_implementation == "kernel":
+            self.weights_ = self.model_.dual_coef_.flatten()
+        else:
+            self.weights_ = self.model_.coef_.flatten()
+
         if self.fit_intercept:
             self.weights_ = np.append(self.weights_, self.model_.intercept_)
         logger.debug("Fitting Complete")
@@ -195,10 +200,26 @@ class MyPairwiseSVM(Learner):
         if self.features_implementation != "none":
             x_test = np.array([self.features_.transform(elem) for elem in x_test])
 
-        if self.fit_intercept:
-            scores = np.dot(x_test, self.weights_[:-1])
+        # def RBF(x, z, gamma, axis=None):
+        #     return np.exp((-gamma * np.linalg.norm(x - z, axis=axis) ** 2))
+        #
+        # A = []
+        # Loop over all suport vectors to calculate K(Xi, X_test), for Xi belongs to the set of support vectors
+        # for x in self.model_.support_vectors_:
+        #    print(x.shape)
+        #    print(x)
+        #    print(RBF(x, x_test, self.gamma).shape)
+        #    print(RBF(x, x_test, self.gamma))
+        #    A.append(RBF(x, x_test, self.gamma))
+        # A = np.array(A)
+
+        weights_to_use = self.weights_[:-1] if self.fit_intercept else self.weights_
+        if self.svm_implementation == "kernel":
+            scores = np.dot(
+                np.matmul(x_test, self.model_.support_vectors_.T), weights_to_use
+            )
         else:
-            scores = np.dot(x_test, self.weights_)
+            scores = np.dot(x_test, weights_to_use)
 
         logger.info("Done predicting scores")
 

@@ -80,11 +80,11 @@ def configspace() -> ConfigurationSpace:
     # n_features = UniformIntegerHyperparameter(
     #     "n_features", 1, 19, default_value=19, log=False
     # )
-    # svm_implementation = CategoricalHyperparameter(
-    #     "svm_implementation",
-    #     ["logistic", "linear"],
-    #     default_value="linear",
-    # )
+
+    # svm_implementation = UnParametrizedHyperparameter("svm_implementation", "logistic")
+    svm_implementation = UnParametrizedHyperparameter("svm_implementation", "linear")
+    # svm_implementation = UnParametrizedHyperparameter("svm_implementation", "kernel")
+
     # features_implementation = CategoricalHyperparameter(
     #     "features_implementation",
     #     ["selection", "pca", "none"],
@@ -108,6 +108,7 @@ def configspace() -> ConfigurationSpace:
     cs = ConfigurationSpace()
     cs.add_hyperparameters(
         [
+            svm_implementation,
             C,
             tol,
             # dual,

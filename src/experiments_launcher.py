@@ -35,7 +35,7 @@ if __name__ == "__main__":
             os.path.join(common_log_path, "automatic_ordering")
         ),
         "preference_learning": make_dir(
-            os.path.join(common_log_path, "preference_learning_eval")
+            os.path.join(common_log_path, "preference_learning")
         ),
         "optimization": make_dir(os.path.join(common_log_path, "optimization")),
         "comparison": make_dir(os.path.join(common_log_path, "comparison")),
@@ -43,47 +43,47 @@ if __name__ == "__main__":
         "plotter": make_dir(os.path.join(common_log_path, "plotter")),
     }
 
-    # print("\n\n")
-    # print("--- SCENARIO GENERATION ---")
-    # subprocess.call("python src/scenario_generator.py", shell=True)
+    print("\n\n")
+    print("--- SCENARIO GENERATION ---")
+    subprocess.call("python src/scenario_generator.py", shell=True)
     confs = [p for p in os.listdir(input_path) if ".json" in p]
 
-    # print("\n\n")
-    # print("--- PRELIMINARY SAMPLING ---")
-    # with tqdm(total=len(confs)) as pbar:
-    #     for conf in confs:
-    #         log_file_name = conf.split(".")[0]
-    #         run_cmd(
-    #             f"python src/preliminar_sampling.py --conf_file {conf}",
-    #             os.path.join(
-    #                 log_paths["preliminar_sampling"], f"{log_file_name}_stdout.txt"
-    #             ),
-    #             os.path.join(
-    #                 log_paths["preliminar_sampling"], f"{log_file_name}_stderr.txt"
-    #             ),
-    #         )
+    print("\n\n")
+    print("--- PRELIMINARY SAMPLING ---")
+    with tqdm(total=len(confs)) as pbar:
+        for conf in confs:
+            log_file_name = conf.split(".")[0]
+            run_cmd(
+                f"python src/preliminar_sampling.py --conf_file {conf}",
+                os.path.join(
+                    log_paths["preliminar_sampling"], f"{log_file_name}_stdout.txt"
+                ),
+                os.path.join(
+                    log_paths["preliminar_sampling"], f"{log_file_name}_stderr.txt"
+                ),
+            )
 
-    #         run_cmd(
-    #             f"python src/automatic_ordering.py --conf_file {conf}",
-    #             os.path.join(
-    #                 log_paths["automatic_ordering"], f"{log_file_name}_stdout.txt"
-    #             ),
-    #             os.path.join(
-    #                 log_paths["automatic_ordering"], f"{log_file_name}_stderr.txt"
-    #             ),
-    #         )
+            run_cmd(
+                f"python src/automatic_ordering.py --conf_file {conf}",
+                os.path.join(
+                    log_paths["automatic_ordering"], f"{log_file_name}_stdout.txt"
+                ),
+                os.path.join(
+                    log_paths["automatic_ordering"], f"{log_file_name}_stderr.txt"
+                ),
+            )
 
-    #         pbar.update()
+            pbar.update()
 
-    # print("\n\n")
-    # print("--- INTERACTIVE PREFERENCE LEARNING ---")
-    # print("\tIt might take some minutes...")
-    # run_cmd(
-    #     "python src/preference_learning_eval.py",
-    #     os.path.join(log_paths["preliminar_sampling"], f"stdout.txt"),
-    #     os.path.join(log_paths["preliminar_sampling"], f"stderr.txt"),
-    # )
-    # print("DONE.")
+    print("\n\n")
+    print("--- INTERACTIVE PREFERENCE LEARNING ---")
+    print("\tIt might take some minutes...")
+    run_cmd(
+        "python src/preference_learning_eval.py",
+        os.path.join(log_paths["preference_learning"], f"stdout.txt"),
+        os.path.join(log_paths["preference_learning"], f"stderr.txt"),
+    )
+    print("DONE.")
 
     evaluation_confs = [elem for elem in confs if elem not in get_tuning_datasets()]
 
