@@ -52,6 +52,20 @@ indicators = ["hv", "sp", "ms", "r2"]
 
 
 def plot_mean_std(df, indicators, output_path):
+
+    SMALL_SIZE = 12
+    MEDIUM_SIZE = 14
+    BIGGER_SIZE = 18
+
+    plt.rc('font', size=BIGGER_SIZE)          # controls default text sizes
+    plt.rc('axes', titlesize=BIGGER_SIZE)     # fontsize of the axes title
+    plt.rc('axes', labelsize=BIGGER_SIZE)    # fontsize of the x and y labels
+    plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+    plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+    plt.rc('legend', fontsize=BIGGER_SIZE)    # legend fontsize
+    plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+
+
     x_ticks = df.columns
     x_labels = "No. comparisons"
 
@@ -201,7 +215,7 @@ def export_end_to_end_evaluation(output_path):
             + ("}" if int(blue) > 60 else "")
             + "  & \multirow{2}{*}{"
             + ("\\textcolor{white}{" if int(blue) > 60 else "")
-            + "\Large{$\\backslash$}"
+            + "$\\backslash$"
             + ("}" if int(blue) > 60 else "")
             + "} & "
             + ("\\textcolor{white}{" if int(blue) > 60 else "")
@@ -230,7 +244,6 @@ def export_end_to_end_evaluation(output_path):
             )
             + ("}" if int(blue) > 60 else "")
             + " \\\\ "
-            + "\\footnotesize{"
             + ("\\textcolor{white}{" if int(blue) > 60 else "")
             + (
                 "\\textbf{"
@@ -252,9 +265,7 @@ def export_end_to_end_evaluation(output_path):
                 else ""
             )
             + ("}" if int(blue) > 60 else "")
-            + "}"
             + " & & "
-            + "\\footnotesize{"
             + ("\\textcolor{white}{" if int(blue) > 60 else "")
             + (
                 "\\textbf{"
@@ -280,7 +291,6 @@ def export_end_to_end_evaluation(output_path):
                 else ""
             )
             + ("}" if int(blue) > 60 else "")
-            + "}"
             + "\end{tabular}}"
         )
 
@@ -323,7 +333,7 @@ def export_end_to_end_evaluation(output_path):
             for col in results.columns:
                 prefix, outfix = "", ""
                 if row == "hv" and col == "hv":
-                    prefix += "\\begin{table*}[!ht]\n\centering\n\t\\begin{tabular}{l|c|c|c|c}\n\t\\toprule\n\tPB$\backslash$IB & HV & SP & MS & R2 \\\\ \midrule"
+                    prefix += "\\begin{figure*}[!ht]\n\centering\n\t\\begin{tabular}{l|c|c|c|c}\n\t\\toprule\n\tPB$\\backslash$IB & HV & SP & MS & R2 \\\\ \midrule"
                 if col == "hv":
                     prefix += "\n\t" + row.upper() + " & "
                 outfix += " & " if col != "r2" else " \\\\ \midrule"
@@ -335,7 +345,7 @@ def export_end_to_end_evaluation(output_path):
                         + str(budget)
                         + " pairwise comparisons.}\label{tbl:end_to_end_evaluation_"
                         + str(budget)
-                        + "}\end{table*}"
+                        + "}\end{figure*}"
                     )
                 )
                 out += prefix + results[row][col] + outfix
